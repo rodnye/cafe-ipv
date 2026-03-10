@@ -1,0 +1,53 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        default: '1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm i
+
+      - name: Build web app
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Assets to Capacitor
+        run: pnpm android:sync
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: pnpm android:compile
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          generate_release_notes: true

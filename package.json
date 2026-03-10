@@ -1,11 +1,13 @@
 {
   "name": "cafe-ipv",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "android:sync": "cap copy && cap sync android",
+    "android:compile": "cd android && ./gradlew assembleDebug",
     "preview": "vite preview"
   },
   "dependencies": {
