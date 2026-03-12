@@ -1,30 +1,88 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+  import { useAuthStore } from '@/stores/auth';
+  import { useRouter } from 'vue-router';
+  import { Button } from '@/components/ui/button';
+  import { Menu, X } from 'lucide-vue-next';
+  import { ref } from 'vue';
+
+  const auth = useAuthStore();
+  const router = useRouter();
+  const mobileMenuOpen = ref(false);
+
+  const logout = () => {
+    auth.logout();
+    router.push('/login');
+  };
+
+  const closeMenu = () => {
+    mobileMenuOpen.value = false;
+  };
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-</template>
+  <div class="bg-background min-h-screen">
+    <header
+      v-if="auth.user"
+      class="bg-card/80 sticky top-0 z-10 border-b shadow-sm backdrop-blur-sm"
+    >
+      <div
+        class="container mx-auto flex items-center justify-between p-3 md:p-4"
+      >
+        <h1 class="text-primary text-lg font-bold md:text-xl">Cafetería IPV</h1>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+        <div class="flex items-center gap-2">
+          <span
+            class="text-muted-foreground hidden text-sm sm:inline md:text-base"
+            >{{ auth.user.name }}</span
+          >
+          <Button
+            variant="outline"
+            size="sm"
+            @click="logout"
+            class="hidden sm:inline-flex"
+            >Salir</Button
+          >
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+          >
+            <Menu v-if="!mobileMenuOpen" class="size-5" />
+            <X v-else class="size-5" />
+          </Button>
+        </div>
+      </div>
+
+      <div v-if="mobileMenuOpen" class="bg-card border-t p-3">
+        <nav class="flex flex-col gap-2">
+          <router-link
+            to="/"
+            class="hover:bg-accent rounded-md px-3 py-2"
+            @click="closeMenu"
+            >Inicio</router-link
+          >
+          <router-link
+            to="/products"
+            class="hover:bg-accent rounded-md px-3 py-2"
+            @click="closeMenu"
+            >Productos</router-link
+          >
+          <router-link
+            to="/daily"
+            class="hover:bg-accent rounded-md px-3 py-2"
+            @click="closeMenu"
+            >Tabla Diaria</router-link
+          >
+          <div class="mt-1 flex items-center justify-between border-t pt-2">
+            <span class="text-sm">{{ auth.user.name }}</span>
+            <Button variant="outline" size="sm" @click="logout">Salir</Button>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container mx-auto p-3 md:p-4">
+      <router-view />
+    </main>
+  </div>
+</template>

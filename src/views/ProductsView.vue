@@ -1,0 +1,149 @@
+<script setup lang="ts">
+  import { ref, onMounted } from 'vue';
+  import { useProductStore } from '@/stores/product';
+  import { Button } from '@/components/ui/button';
+  import { Input } from '@/components/ui/input';
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '@/components/ui/table';
+  import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+  } from '@/components/ui/dialog';
+  import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
+
+  const productStore = useProductStore();
+  onMounted(() => productStore.load());
+
+  const showDialog = ref(false);
+  const editingProduct = ref<{ id?: string; name: string; price: number }>({
+    name: '',
+    price: 0,
+  });
+
+  const openNew = () => {
+    editingProduct.value = { name: '', price: 0 };
+    showDialog.value = true;
+  };
+
+  const openEdit = (product: { id: string; name: string; price: number }) => {
+    editingProduct.value = { ...product };
+    showDialog.value = true;
+  };
+
+  const save = () => {
+    if (editingProduct.value.id) {
+      productStore.updateProduct(editingProduct.value.id, {
+        name: editingProduct.value.name,
+        price: editingProduct.value.price,
+      });
+    } else {
+      productStore.addProduct({
+        name: editingProduct.value.name,
+        price: editingProduct.value.price,
+      });
+    }
+    showDialog.value = false;
+  };
+
+  const confirmDelete = (id: string) => {
+    if (confirm('¿Eliminar producto?')) {
+      productStore.deleteProduct(id);
+    }
+  };
+</script>
+
+<template>
+  <div class="space-y-4">
+    <div
+      class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
+    >
+      <h2 class="text-primary text-xl font-bold md:text-2xl">Productos</h2>
+      <Button @click="openNew" class="gap-2">
+        <Plus class="size-4" />
+        Nuevo producto
+      </Button>
+    </div>
+
+    <div class="overflow-x-auto rounded-lg border shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow class="bg-muted/50">
+            <TableHead>Nombre</TableHead>
+            <TableHead>Precio (CUP)</TableHead>
+            <TableHead class="w-24">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow
+            v-for="product in productStore.products"
+            :key="product.id"
+            class="hover:bg-muted/30"
+          >
+            <TableCell class="font-medium">{{ product.name }}</TableCell>
+            <TableCell class="font-mono">{{ product.price }}</TableCell>
+            <TableCell>
+              <div class="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  @click="openEdit(product)"
+                >
+                  <Pencil class="size-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon-sm"
+                  @click="confirmDelete(product.id)"
+                >
+                  <Trash2 class="size-4" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+
+    <Dialog v-model:open="showDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle
+            >{{ editingProduct.id ? 'Editar' : 'Nuevo' }} producto</DialogTitle
+          >
+        </DialogHeader>
+        <div class="space-y-4 py-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Nombre</label>
+            <Input
+              v-model="editingProduct.name"
+              placeholder="Ej. Café con leche"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Precio (CUP)</label>
+            <Input
+              v-model.number="editingProduct.price"
+              type="number"
+              min="0"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showDialog = false"
+            >Cancelar</Button
+          >
+          <Button @click="save">Guardar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
+</template>
