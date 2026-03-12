@@ -7,7 +7,7 @@
   import OrderList from '@/components/OrderList.vue';
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
-  import { Eye, Plus, CheckCheck, Minus, ShoppingBag } from 'lucide-vue-next';
+  import { Eye, Plus, Minus } from 'lucide-vue-next';
   import {
     Sheet,
     SheetContent,
@@ -190,10 +190,6 @@
       refreshDayFromOrders();
     }
   );
-
-  const resetSearch = () => {
-    searchQuery.value = '';
-  };
 </script>
 
 <template>

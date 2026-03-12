@@ -2,7 +2,7 @@
   import { useAuthStore } from '@/stores/auth';
   import { useRouter } from 'vue-router';
   import { Button } from '@/components/ui/button';
-  import { Menu, X, Home, Package, Calendar, LogOut } from 'lucide-vue-next';
+  import { Menu, Home, Package, Calendar, LogOut } from 'lucide-vue-next';
   import { ref } from 'vue';
   import {
     Sheet,
@@ -82,7 +82,7 @@
 
       <!-- Mobile menu sheet -->
       <Sheet v-model:open="mobileMenuOpen">
-        <SheetContent side="left" class="w-[280px] p-0 sm:w-[350px]">
+        <SheetContent side="left" class="w-70 p-0 sm:w-87.5">
           <SheetHeader class="border-b p-4">
             <SheetTitle class="text-left">Cafetería IPV</SheetTitle>
           </SheetHeader>
