@@ -1,5 +1,51 @@
-# Vue 3 + TypeScript + Vite
+# Café IPV App
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+[![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=for-the-badge&logo=vue.js)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?style=for-the-badge&logo=capacitor)](https://capacitorjs.com/)
+[![shadcn-vue](https://img.shields.io/badge/shadcn/vue-2-000000?style=for-the-badge&logo=shadcnui)](https://www.shadcn-vue.com/)
+[![Version](https://img.shields.io/badge/version-0.1.3--alpha-blue?style=for-the-badge)](https://github.com/rodnye/cafe-ipv/releases)
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+Aplicación de gestión para cafetería desarrollada con **Vue 3**, **Vite**, **shadcn-vue** y empaquetada como app Android nativa con **Capacitor**.
+
+## Características
+
+- **Multiplataforma** - Web y Android (APK)
+- **UI moderna** - Componentes shadcn-vue con Tailwind CSS
+- **Gestión de inventario** - Control de productos y existencias
+- **Pedidos diarios** - Registro y seguimiento
+- **Tabla diaria** - Control de entradas, salidas y ventas
+- **Autenticación simple** - Modo invitado
+
+## Tecnologías
+
+- **Frontend:** Vue 3, TypeScript, Pinia, Vue Router
+- **Estilos:** Tailwind CSS, shadcn-vue, Lucide icons
+- **Build:** Vite
+- **Mobile:** Capacitor 8 (Android)
+- **Package Manager:** pnpm
+
+## Probarlo en Android
+
+La forma más rápida de probar la app es descargar el APK desde las **releases**:
+
+1. Ve a la [sección de Releases](https://github.com/rodnye/cafe-ipv/releases)
+2. Descarga el archivo `app-debug.apk` de la última versión
+3. Instálalo en tu dispositivo Android (permite orígenes desconocidos)
+
+## 🛠️ Desarrollo
+
+```bash
+# Instalar dependencias
+pnpm install
+
+# Iniciar servidor de desarrollo
+pnpm dev
+
+# Compilar para producción
+pnpm build
+
+# Sincronizar y compilar para Android
+pnpm android:sync
+pnpm android:compile
+```
