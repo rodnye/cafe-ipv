@@ -4,6 +4,7 @@
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?style=for-the-badge&logo=capacitor)](https://capacitorjs.com/)
 [![shadcn-vue](https://img.shields.io/badge/shadcn/vue-2-000000?style=for-the-badge&logo=shadcnui)](https://www.shadcn-vue.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-0.1.3--alpha-blue?style=for-the-badge)](https://github.com/rodnye/cafe-ipv/releases)
 
 Aplicación de gestión para cafetería desarrollada con **Vue 3**, **Vite**, **shadcn-vue** y empaquetada como app Android nativa con **Capacitor**.
@@ -49,3 +50,7 @@ pnpm build
 pnpm android:sync
 pnpm android:compile
 ```
+
+---
+
+> _Another random app but useful for my personal use <3_
