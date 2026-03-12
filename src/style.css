@@ -3,6 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
 :root {
   --radius: 0.5rem;
   --background: oklch(0.98 0.02 240);

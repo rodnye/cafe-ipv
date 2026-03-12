@@ -28,7 +28,6 @@
 
 <template>
   <div class="space-y-2">
-    <h3 class="font-medium">Pedidos del día</h3>
     <div
       v-if="orders.length === 0"
       class="text-muted-foreground py-4 text-center text-sm"
