@@ -3,11 +3,18 @@
   import { useProductStore } from '@/stores/product';
   import { useDayStore } from '@/stores/day';
   import { useOrderStore } from '@/stores/order';
-  import ProductCard from '@/components/ProductCard.vue';
   import CurrentOrder from '@/components/CurrentOrder.vue';
   import OrderList from '@/components/OrderList.vue';
   import { Button } from '@/components/ui/button';
-  import { ChevronDown } from 'lucide-vue-next';
+  import { Input } from '@/components/ui/input';
+  import { Eye, Plus, CheckCheck, Minus, ShoppingBag } from 'lucide-vue-next';
+  import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+  } from '@/components/ui/sheet';
 
   const productStore = useProductStore();
   const dayStore = useDayStore();
@@ -23,15 +30,22 @@
     refreshDayFromOrders();
   });
 
-  //paginación de productos
-  const limit = ref(8);
-  const productsToShow = computed(() =>
-    productStore.products.slice(0, limit.value)
-  );
-  const showMore = () => {
-    limit.value += 8;
-  };
+  // Mobile sheet states
+  const showOrdersSheet = ref(false);
+  const showProductSheet = ref(false);
 
+  // Search
+  const searchQuery = ref('');
+
+  const filteredProducts = computed(() => {
+    if (!searchQuery.value) return productStore.products;
+    const q = searchQuery.value.toLowerCase();
+    return productStore.products.filter((p) =>
+      p.name.toLowerCase().includes(q)
+    );
+  });
+
+  // Current order
   const currentOrderItems = ref<{ productId: string; quantity: number }[]>([]);
   const editingOrderId = ref<string | null>(null);
 
@@ -71,7 +85,7 @@
     editingOrderId.value = null;
   };
 
-  //mapa de precios del día actual
+  // Day prices map
   const dayPricesMap = computed(() => {
     const map = new Map<string, number>();
     if (dayStore.currentDay) {
@@ -82,21 +96,38 @@
     return map;
   });
 
-  // Pedidos del día actual
+  // Orders for current day
   const ordersForCurrentDay = computed(() => {
     if (!dayStore.currentDay) return [];
     return orderStore.getOrdersByDay(dayStore.currentDay.id);
   });
 
-  // Cargar pedido para edición
+  const currentOrderTotal = computed(() => {
+    let total = 0;
+    currentOrderItems.value.forEach((item) => {
+      const price = dayPricesMap.value.get(item.productId) || 0;
+      total += price * item.quantity;
+    });
+    return total;
+  });
+
+  const currentItemCount = computed(() => {
+    return currentOrderItems.value.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+  });
+
+  // Edit order
   const editOrder = (orderId: string) => {
     const order = orderStore.orders.find((o) => o.id === orderId);
     if (!order) return;
     currentOrderItems.value = order.items.map((item) => ({ ...item }));
     editingOrderId.value = orderId;
+    showOrdersSheet.value = false;
   };
 
-  // Guardar pedid
+  // Save order
   const saveOrder = () => {
     if (!dayStore.currentDay) return;
     const items = currentOrderItems.value.filter((item) => item.quantity > 0);
@@ -110,9 +141,10 @@
 
     refreshDayFromOrders();
     clearCurrentOrder();
+    showProductSheet.value = false;
   };
 
-  // Eliminar pedido
+  // Delete order
   const deleteOrder = (orderId: string) => {
     if (!confirm('¿Eliminar este pedido?')) return;
     orderStore.deleteOrder(orderId);
@@ -148,7 +180,6 @@
       }
     });
 
-    // Sincronizar cantidades
     dayStore.syncWithOrders(dayId, orders);
   };
 
@@ -159,51 +190,225 @@
       refreshDayFromOrders();
     }
   );
+
+  const resetSearch = () => {
+    searchQuery.value = '';
+  };
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 lg:flex-row lg:gap-6">
-    <div class="flex-1">
-      <h2 class="text-primary mb-4 text-xl font-bold md:text-2xl">Productos</h2>
-      <div
-        class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4 xl:grid-cols-4"
-      >
-        <ProductCard
-          v-for="product in productsToShow"
-          :key="product.id"
-          :product="product"
-          @add-to-cart="addToCurrentOrder(product.id)"
-        />
-        <div
-          v-if="productStore.products.length > limit"
-          class="col-span-full mt-4 flex justify-center"
-        >
-          <Button variant="outline" @click="showMore" class="gap-2">
-            Ver más <ChevronDown class="size-4" />
-          </Button>
+  <div class="flex h-full flex-col">
+    <!-- Desktop Layout (hidden on mobile) -->
+    <div class="hidden lg:grid lg:h-full lg:grid-cols-3 lg:gap-6">
+      <!-- Left column - Products -->
+      <div class="col-span-2 overflow-y-auto pr-2">
+        <div class="bg-background sticky top-0 z-10 pt-4 pb-2">
+          <h2 class="mb-2 text-lg font-semibold">Productos</h2>
+          <Input
+            v-model="searchQuery"
+            placeholder="Buscar productos..."
+            class="w-full"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-3 pb-4">
+          <div
+            v-for="product in filteredProducts"
+            :key="product.id"
+            class="bg-card rounded-lg border p-3 transition-shadow hover:shadow-md"
+          >
+            <div class="mb-2">
+              <p class="font-medium">{{ product.name }}</p>
+              <p class="text-muted-foreground text-sm">
+                {{ product.price }} CUP
+              </p>
+            </div>
+            <Button
+              class="w-full gap-1"
+              size="sm"
+              variant="outline"
+              @click="addToCurrentOrder(product.id)"
+            >
+              <Plus class="size-4" />
+              Agregar
+            </Button>
+          </div>
+          <div
+            v-if="filteredProducts.length === 0"
+            class="text-muted-foreground col-span-2 py-8 text-center"
+          >
+            No hay productos
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column - Order & Orders -->
+      <div class="overflow-y-auto border-l pl-2">
+        <div class="bg-background sticky top-0 z-10 pt-4 pb-2">
+          <h2 class="mb-2 text-lg font-semibold">Pedido actual</h2>
+        </div>
+        <div class="space-y-4">
+          <CurrentOrder
+            :items="currentOrderItems"
+            :products="productStore.products"
+            :day-prices="dayPricesMap"
+            :is-editing="!!editingOrderId"
+            @increment="addToCurrentOrder"
+            @decrement="removeFromCurrentOrder"
+            @remove="removeItemCompletely"
+            @save="saveOrder"
+            @cancel="clearCurrentOrder"
+          />
+
+          <div class="border-t pt-4">
+            <div class="mb-3 flex items-center justify-between">
+              <h3 class="font-medium">Pedidos del día</h3>
+              <span class="text-muted-foreground text-sm">
+                {{ ordersForCurrentDay.length }} pedidos
+              </span>
+            </div>
+            <OrderList
+              :orders="ordersForCurrentDay"
+              :products="productStore.products"
+              :day-prices="dayPricesMap"
+              @edit="editOrder"
+              @delete="deleteOrder"
+            />
+          </div>
         </div>
       </div>
     </div>
 
-    <aside class="space-y-4 lg:w-80">
-      <CurrentOrder
-        :items="currentOrderItems"
-        :products="productStore.products"
-        :day-prices="dayPricesMap"
-        :is-editing="!!editingOrderId"
-        @increment="addToCurrentOrder"
-        @decrement="removeFromCurrentOrder"
-        @remove="removeItemCompletely"
-        @save="saveOrder"
-        @cancel="clearCurrentOrder"
-      />
-      <OrderList
-        :orders="ordersForCurrentDay"
-        :products="productStore.products"
-        :day-prices="dayPricesMap"
-        @edit="editOrder"
-        @delete="deleteOrder"
-      />
-    </aside>
+    <!-- Mobile Layout (hidden on desktop) -->
+    <div class="flex h-full flex-col lg:hidden">
+      <!-- Current order summary (sticky top) -->
+      <div class="bg-background sticky top-0 z-10 border-b p-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold">Pedido actual</h2>
+            <p class="text-muted-foreground text-sm">
+              {{ currentItemCount }} artículos · {{ currentOrderTotal }} CUP
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              class="gap-1"
+              @click="showOrdersSheet = true"
+            >
+              <Eye class="size-4" />
+              Pedidos
+            </Button>
+            <Button size="sm" class="gap-1" @click="showProductSheet = true">
+              <Plus class="size-4" />
+              Agregar
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current order details (scrollable) -->
+      <div class="flex-1 overflow-y-auto p-3">
+        <CurrentOrder
+          :items="currentOrderItems"
+          :products="productStore.products"
+          :day-prices="dayPricesMap"
+          :is-editing="!!editingOrderId"
+          @increment="addToCurrentOrder"
+          @decrement="removeFromCurrentOrder"
+          @remove="removeItemCompletely"
+          @save="saveOrder"
+          @cancel="clearCurrentOrder"
+        />
+      </div>
+    </div>
+
+    <!-- Mobile Product Sheet -->
+    <Sheet v-model:open="showProductSheet">
+      <SheetContent side="bottom" class="h-[90vh] rounded-t-xl p-0">
+        <SheetHeader class="border-b p-4">
+          <SheetTitle>Agregar productos</SheetTitle>
+          <SheetDescription>
+            Selecciona los productos para tu pedido
+          </SheetDescription>
+        </SheetHeader>
+        <div class="flex h-full flex-col">
+          <div class="border-b p-4">
+            <Input
+              v-model="searchQuery"
+              placeholder="Buscar productos..."
+              class="w-full"
+            />
+          </div>
+          <div class="flex-1 overflow-y-auto p-4">
+            <div class="space-y-2">
+              <div
+                v-for="product in filteredProducts"
+                :key="product.id"
+                class="flex items-center justify-between rounded-lg border p-3"
+              >
+                <div>
+                  <p class="font-medium">{{ product.name }}</p>
+                  <p class="text-muted-foreground text-sm">
+                    {{ product.price }} CUP
+                  </p>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    class="size-8"
+                    @click="removeFromCurrentOrder(product.id)"
+                  >
+                    <Minus class="size-4" />
+                  </Button>
+                  <span class="w-8 text-center">
+                    {{
+                      currentOrderItems.find((i) => i.productId === product.id)
+                        ?.quantity || 0
+                    }}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    class="size-8"
+                    @click="addToCurrentOrder(product.id)"
+                  >
+                    <Plus class="size-4" />
+                  </Button>
+                </div>
+              </div>
+              <div
+                v-if="filteredProducts.length === 0"
+                class="text-muted-foreground py-8 text-center"
+              >
+                No hay productos
+              </div>
+            </div>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Mobile Orders Sheet -->
+    <Sheet v-model:open="showOrdersSheet">
+      <SheetContent side="bottom" class="h-[80vh] rounded-t-xl p-0">
+        <SheetHeader class="border-b p-4">
+          <SheetTitle>Pedidos del día</SheetTitle>
+          <SheetDescription>
+            {{ ordersForCurrentDay.length }} pedidos registrados
+          </SheetDescription>
+        </SheetHeader>
+        <div class="h-full overflow-y-auto p-4">
+          <OrderList
+            :orders="ordersForCurrentDay"
+            :products="productStore.products"
+            :day-prices="dayPricesMap"
+            @edit="editOrder"
+            @delete="deleteOrder"
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
   </div>
 </template>
