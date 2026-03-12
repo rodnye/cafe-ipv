@@ -31,3 +31,16 @@ export interface CartItem {
   price: number;
   quantity: number;
 }
+
+export interface OrderItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface Order {
+  id: string;
+  dayId: string;
+  items: OrderItem[];
+  createdAt: number;
+  updatedAt: number;
+}

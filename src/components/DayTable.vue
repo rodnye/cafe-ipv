@@ -96,15 +96,7 @@
               min="0"
             />
           </TableCell>
-          <TableCell>
-            <Input
-              type="number"
-              :value="entry.vendido"
-              @change="(e: Event) => updateField(entry.productId, 'vendido', e)"
-              class="h-8 w-16 md:w-20"
-              min="0"
-            />
-          </TableCell>
+          <TableCell class="font-mono">{{ entry.vendido }}</TableCell>
           <TableCell class="font-mono font-medium"
             >{{ entry.importe }} CUP</TableCell
           >

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Day, DayProductEntry, CartItem } from '@/types';
+import type { Day, DayProductEntry } from '@/types';
 import { useProductStore } from './product';
 
 const STORAGE_KEY = 'cafeteria-days';
@@ -83,53 +83,57 @@ export const useDayStore = defineStore('days', () => {
     return days.value.find((d) => d.id === currentDayId.value) || null;
   });
 
-  const addToCart = (productId: string, quantity: number = 1) => {
-    if (!currentDay.value) return;
-    const day = currentDay.value;
-    const entry = day.products.find((p) => p.productId === productId);
-    if (!entry) {
-      const product = productStore.products.find((p) => p.id === productId);
-      if (!product) return;
-      const newEntry: DayProductEntry = {
-        productId,
-        productName: product.name,
-        inicio: 0,
-        entrada: 0,
-        salida: quantity,
-        precio: product.price,
-        vendido: quantity,
-        importe: quantity * product.price,
-        final: 0 - quantity,
-      };
-      day.products.push(newEntry);
-    } else {
-      entry.salida += quantity;
-      entry.vendido += quantity;
-      entry.importe = entry.vendido * entry.precio;
+  const syncWithOrders = (
+    dayId: string,
+    orders: { items: { productId: string; quantity: number }[] }[]
+  ) => {
+    const day = days.value.find((d) => d.id === dayId);
+    if (!day) return;
+
+    // Agregar cantidades por producto
+    const quantities = new Map<string, number>();
+    orders.forEach((order) => {
+      order.items.forEach((item) => {
+        const current = quantities.get(item.productId) || 0;
+        quantities.set(item.productId, current + item.quantity);
+      });
+    });
+
+    day.products.forEach((entry) => {
+      const qty = quantities.get(entry.productId) || 0;
+      entry.vendido = qty;
+      entry.importe = qty * entry.precio;
       entry.final = entry.inicio + entry.entrada - entry.salida;
-    }
+    });
+
     day.updatedAt = Date.now();
     save();
   };
 
-  const cartItems = computed<CartItem[]>(() => {
-    if (!currentDay.value) return [];
-    return currentDay.value.products
-      .filter((p) => p.vendido > 0)
-      .map((p) => ({
-        productId: p.productId,
-        name: p.productName,
-        price: p.precio,
-        quantity: p.vendido,
-      }));
-  });
-
-  const totalImporte = computed(() => {
-    return cartItems.value.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-  });
+  const addProductToDay = (
+    dayId: string,
+    productId: string,
+    productName: string,
+    defaultPrice: number
+  ) => {
+    const day = days.value.find((d) => d.id === dayId);
+    if (!day) return;
+    if (day.products.some((p) => p.productId === productId)) return;
+    const newEntry: DayProductEntry = {
+      productId,
+      productName,
+      inicio: 0,
+      entrada: 0,
+      salida: 0,
+      precio: defaultPrice,
+      vendido: 0,
+      importe: 0,
+      final: 0,
+    };
+    day.products.push(newEntry);
+    day.updatedAt = Date.now();
+    save();
+  };
 
   const updateDayEntry = (
     dayId: string,
@@ -145,11 +149,10 @@ export const useDayStore = defineStore('days', () => {
       field === 'inicio' ||
       field === 'entrada' ||
       field === 'salida' ||
-      field === 'vendido' ||
       field === 'precio'
     ) {
       (entry[field] as number) = value;
-      if (field === 'vendido' || field === 'precio') {
+      if (field === 'precio') {
         entry.importe = entry.vendido * entry.precio;
       }
       entry.final = entry.inicio + entry.entrada - entry.salida;
@@ -162,12 +165,11 @@ export const useDayStore = defineStore('days', () => {
     days,
     currentDayId,
     currentDay,
-    cartItems,
-    totalImporte,
     load,
     createDayFromPrevious,
     setCurrentDay,
-    addToCart,
+    syncWithOrders,
+    addProductToDay,
     updateDayEntry,
   };
 });
