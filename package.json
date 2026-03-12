@@ -1,5 +1,5 @@
 {
-  "name": "cafe-ipv",
+  "name": "cafe-ipv-app",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "tailwindcss": "^4.2.1",
     "vue": "^3.5.25"
   },
   "devDependencies": {
