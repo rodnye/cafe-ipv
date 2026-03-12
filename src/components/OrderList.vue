@@ -2,6 +2,7 @@
   import type { Order, Product } from '@/types';
   import { Button } from '@/components/ui/button';
   import { Edit, Trash2 } from 'lucide-vue-next';
+  import { computed } from 'vue';
 
   const props = defineProps<{
     orders: Order[];
@@ -13,6 +14,14 @@
     (e: 'edit', orderId: string): void;
     (e: 'delete', orderId: string): void;
   }>();
+
+  const sortedOrders = computed(() => {
+    return [...props.orders].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  });
 
   const orderTotal = (order: Order) => {
     return order.items.reduce((sum, item) => {
@@ -36,7 +45,7 @@
     </div>
     <div v-else class="space-y-2">
       <div
-        v-for="order in orders"
+        v-for="order in sortedOrders"
         :key="order.id"
         class="bg-muted/30 rounded-md border p-2"
       >
@@ -48,6 +57,12 @@
             <span class="text-muted-foreground ml-2 text-xs"
               >{{ itemCount(order) }} artículos</span
             >
+            <span
+              v-if="order.createdAt"
+              class="text-muted-foreground ml-2 text-xs"
+            >
+              {{ new Date(order.createdAt).toLocaleTimeString() }}
+            </span>
           </div>
           <div class="flex gap-1">
             <Button

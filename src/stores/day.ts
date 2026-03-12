@@ -56,6 +56,7 @@ export const useDayStore = defineStore('days', () => {
         inicio: 0,
         entrada: 0,
         salida: 0,
+        total: 0,
         precio: prod.price,
         vendido: 0,
         importe: 0,
@@ -103,7 +104,8 @@ export const useDayStore = defineStore('days', () => {
       const qty = quantities.get(entry.productId) || 0;
       entry.vendido = qty;
       entry.importe = qty * entry.precio;
-      entry.final = entry.inicio + entry.entrada - entry.salida;
+      entry.total = entry.inicio + entry.entrada - entry.salida;
+      entry.final = entry.total - entry.vendido;
     });
 
     day.updatedAt = Date.now();
@@ -125,6 +127,7 @@ export const useDayStore = defineStore('days', () => {
       inicio: 0,
       entrada: 0,
       salida: 0,
+      total: 0,
       precio: defaultPrice,
       vendido: 0,
       importe: 0,
@@ -151,11 +154,12 @@ export const useDayStore = defineStore('days', () => {
       field === 'salida' ||
       field === 'precio'
     ) {
-      (entry[field] as number) = value;
+      entry[field] = value;
       if (field === 'precio') {
         entry.importe = entry.vendido * entry.precio;
       }
-      entry.final = entry.inicio + entry.entrada - entry.salida;
+      entry.total = entry.inicio + entry.entrada - entry.salida;
+      entry.final = entry.total - entry.vendido;
       day.updatedAt = Date.now();
       save();
     }

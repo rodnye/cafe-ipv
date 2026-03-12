@@ -293,7 +293,7 @@
               @click="showOrdersSheet = true"
             >
               <Eye class="size-4" />
-              Pedidos
+              Historial
             </Button>
             <Button size="sm" class="gap-1" @click="showProductSheet = true">
               <Plus class="size-4" />
@@ -303,7 +303,7 @@
         </div>
       </div>
 
-      <!-- Current order details (scrollable) -->
+      <!-- Current order details -->
       <div class="flex-1 overflow-y-auto p-3">
         <CurrentOrder
           :items="currentOrderItems"
@@ -390,7 +390,7 @@
     <Sheet v-model:open="showOrdersSheet">
       <SheetContent side="bottom" class="h-[80vh] rounded-t-xl p-0">
         <SheetHeader class="border-b p-4">
-          <SheetTitle>Pedidos del día</SheetTitle>
+          <SheetTitle>Historial de pedidos del día</SheetTitle>
           <SheetDescription>
             {{ ordersForCurrentDay.length }} pedidos registrados
           </SheetDescription>

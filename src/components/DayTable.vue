@@ -36,16 +36,16 @@
   <div class="overflow-x-auto rounded-lg border shadow-sm">
     <Table>
       <TableHeader>
-        <TableRow class="bg-muted/50">
-          <TableHead class="whitespace-nowrap">Producto</TableHead>
-          <TableHead class="whitespace-nowrap">Inicio</TableHead>
-          <TableHead class="whitespace-nowrap">Entrada</TableHead>
-          <TableHead class="whitespace-nowrap">Salida</TableHead>
-          <TableHead class="whitespace-nowrap">Total</TableHead>
-          <TableHead class="whitespace-nowrap">Precio</TableHead>
-          <TableHead class="whitespace-nowrap">Vendido</TableHead>
-          <TableHead class="whitespace-nowrap">Importe</TableHead>
-          <TableHead class="whitespace-nowrap">Final</TableHead>
+        <TableRow class="bg-muted/50 *:whitespace-nowrap">
+          <TableHead>Producto</TableHead>
+          <TableHead>Inicio</TableHead>
+          <TableHead>Entrada</TableHead>
+          <TableHead>Salida</TableHead>
+          <TableHead>Total</TableHead>
+          <TableHead>Precio</TableHead>
+          <TableHead>Vendido</TableHead>
+          <TableHead>Importe</TableHead>
+          <TableHead>Final</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -84,9 +84,7 @@
               min="0"
             />
           </TableCell>
-          <TableCell class="font-mono">{{
-            entry.inicio + entry.entrada
-          }}</TableCell>
+          <TableCell class="font-mono">{{ entry.total }}</TableCell>
           <TableCell>
             <Input
               type="number"

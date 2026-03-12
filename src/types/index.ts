@@ -11,6 +11,7 @@ export interface DayProductEntry {
   inicio: number;
   entrada: number;
   salida: number;
+  total: number;
   precio: number;
   vendido: number;
   importe: number;

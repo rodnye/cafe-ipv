@@ -2,7 +2,8 @@
   import { computed } from 'vue';
   import type { Product } from '@/types';
   import { Button } from '@/components/ui/button';
-  import { Minus, Plus, Trash2 } from 'lucide-vue-next';
+  import { Minus, Edit, Plus, Trash2, ShoppingCartIcon } from 'lucide-vue-next';
+  import { cn } from '@/lib/utils';
 
   const props = defineProps<{
     items: { productId: string; quantity: number }[];
@@ -37,8 +38,19 @@
 
 <template>
   <div class="space-y-4">
-    <h3 class="font-medium">
-      {{ isEditing ? 'Editando pedido' : 'Nuevo pedido' }}
+    <h3
+      :class="
+        cn(
+          'flex items-center font-medium',
+          isEditing ? 'text-amber-600' : 'text-primary'
+        )
+      "
+    >
+      <Edit v-if="isEditing" />
+      <ShoppingCartIcon v-else />
+      <span class="ml-3">{{
+        isEditing ? 'Editando pedido' : 'Nuevo pedido'
+      }}</span>
     </h3>
     <div
       v-if="items.length === 0"
@@ -81,9 +93,9 @@
           </Button>
         </div>
       </div>
-      <div class="flex justify-between border-t pt-2 font-bold">
+      <div class="flex items-end justify-between border-t pt-2 font-bold">
         <span>Total</span>
-        <span>{{ total }} CUP</span>
+        <span class="text-2xl">{{ total }} CUP</span>
       </div>
     </div>
     <div class="flex gap-2">
