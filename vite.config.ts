@@ -6,7 +6,7 @@ import vue from '@vitejs/plugin-vue';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
-  base: process.env.NODE_ENV === 'github-pages' ? '/cafe-ipv' : '/',
+  base: process.env.BASE_URL || '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

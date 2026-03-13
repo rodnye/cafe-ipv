@@ -37,7 +37,7 @@ jobs:
       - name: Build web app
         run: pnpm build
         env:
-          NODE_ENV: github-pages
+          BASE_URL: /cafe-ipv/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
