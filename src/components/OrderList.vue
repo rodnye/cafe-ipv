@@ -44,7 +44,7 @@
           <div>
             <span class="text-sm font-medium">
               Pedido
-              <span class="hidden lg:block">#{{ order.id.slice(0, 4) }}</span>
+              <span class="hidden lg:inline">#{{ order.id.slice(0, 4) }}</span>
             </span>
             <span class="lg:hidden">#{{ orders.length - index }}</span>
             <span class="text-muted-foreground ml-2 text-xs"

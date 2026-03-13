@@ -25,21 +25,26 @@ export const useDayStore = defineStore('days', () => {
 
   const createDayFromPrevious = (previousDayId: string | null) => {
     const today = new Date().toISOString().split('T')[0]!;
-    if (days.value.some((d) => d.date === today)) {
-      const existing = days.value.find((d) => d.date === today);
-      if (existing) currentDayId.value = existing.id;
+
+    const existing = days.value.find((d) => d.date === today);
+    if (existing) {
+      currentDayId.value = existing.id;
       return;
     }
 
     let products: DayProductEntry[] = [];
+
     if (previousDayId) {
       const prevDay = days.value.find((d) => d.id === previousDayId);
       if (prevDay) {
         products = prevDay.products.map((p) => ({
-          ...p,
+          productId: p.productId,
+          productName: p.productName,
           inicio: p.final,
           entrada: 0,
           salida: 0,
+          total: p.final,
+          precio: p.precio,
           vendido: 0,
           importe: 0,
           final: p.final,
