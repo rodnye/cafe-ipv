@@ -1,7 +1,7 @@
 {
   "name": "cafe-ipv-app",
   "private": true,
-  "version": "0.1.3-alpha",
+  "version": "0.2.1-beta",
   "type": "module",
   "scripts": {
     "dev": "vite",

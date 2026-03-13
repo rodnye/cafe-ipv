@@ -1,9 +1,7 @@
-name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+name: Deploy GitHub Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ['main']
     tags:
       - 'v*'
 
@@ -43,6 +41,8 @@ jobs:
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
 
   # Deployment job
   deploy:
