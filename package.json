@@ -11,6 +11,13 @@
     "preview": "vite preview",
     "format": "prettier ./src --write"
   },
+  "author": "Rodny Estrada <rrodnyestrada1@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rodnye/cafe-ipv"
+  },
+  "homepage": "https://rodnye.github.io/cafe-ipv",
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/vue-table": "^8.21.3",
