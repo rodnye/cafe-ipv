@@ -34,7 +34,7 @@ export const useOrderStore = defineStore('orders', () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    orders.value.push(newOrder);
+    orders.value.splice(0, 0, newOrder);
     save();
     return newOrder;
   };
