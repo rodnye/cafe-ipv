@@ -1,3 +1,5 @@
+// src/stores/product.ts
+
 import { defineStore } from 'pinia';
 import { useDayStore } from './day';
 import type { IDayId, IProduct, IProductId } from '@/types';

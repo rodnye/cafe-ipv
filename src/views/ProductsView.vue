@@ -1,11 +1,10 @@
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { ref, watch } from 'vue';
   import { useProductStore } from '@/stores/product';
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
   import {
     Table,
-    TableBody,
     TableCell,
     TableHead,
     TableHeader,
@@ -18,11 +17,18 @@
     DialogHeader,
     DialogTitle,
   } from '@/components/ui/dialog';
-  import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
+  import { Plus, Pencil, Trash2, GripVertical } from 'lucide-vue-next';
   import { useDayStore } from '@/stores/day';
+  import draggable from 'vuedraggable';
 
   const productStore = useProductStore();
   const dayStore = useDayStore();
+  const products = ref(dayStore.currentDay.products);
+
+  watch(products, async (products) => {
+    dayStore.currentDay.products = products;
+    await dayStore.saveDay(dayStore.currentDay);
+  });
 
   const showDialog = ref(false);
   const editingProduct = ref<{ id?: string; name: string; price: number }>({
@@ -65,6 +71,14 @@
       await productStore.deleteProduct(dayStore.currentDayId, productId);
     }
   };
+
+  const onDragEnd = async () => {
+    // Save the new order to the store
+    if (dayStore.currentDay) {
+      dayStore.currentDay.updatedAt = Date.now();
+      await dayStore.saveDay(dayStore.currentDay);
+    }
+  };
 </script>
 
 <template>
@@ -83,39 +97,58 @@
       <Table>
         <TableHeader>
           <TableRow class="bg-muted/50">
+            <TableHead class="w-10"></TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead>Precio (CUP)</TableHead>
             <TableHead class="w-24">Acciones</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          <TableRow
-            v-for="product in productStore.currentProducts"
-            :key="product.id"
-            class="hover:bg-muted/30"
-          >
-            <TableCell class="font-medium">{{ product.name }}</TableCell>
-            <TableCell class="font-mono">{{ product.price }}</TableCell>
-            <TableCell>
-              <div class="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  @click="openEdit(product)"
+        <draggable
+          tag="tbody"
+          data-slot="table-body"
+          v-model="dayStore.currentDay.products"
+          class="divide-y"
+          item-key="sdsad"
+          ghostClass="opacity-50"
+          dragClass="cursor-grabbing"
+          handle=".drag-handle"
+          group="products"
+          :animation="200"
+          :disabled="false"
+          @end="onDragEnd"
+        >
+          <template #item="{ element: product }">
+            <TableRow class="hover:bg-muted/30 cursor-default">
+              <TableCell class="w-10">
+                <div
+                  class="drag-handle text-muted-foreground hover:text-foreground cursor-grab"
                 >
-                  <Pencil class="size-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon-sm"
-                  @click="confirmDelete(product.id)"
-                >
-                  <Trash2 class="size-4" />
-                </Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        </TableBody>
+                  <GripVertical class="size-4" />
+                </div>
+              </TableCell>
+              <TableCell class="font-medium">{{ product.name }}</TableCell>
+              <TableCell class="font-mono">{{ product.price }}</TableCell>
+              <TableCell>
+                <div class="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    @click="openEdit(product)"
+                  >
+                    <Pencil class="size-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon-sm"
+                    @click="confirmDelete(product.id)"
+                  >
+                    <Trash2 class="size-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          </template>
+        </draggable>
       </Table>
     </div>
 
@@ -153,3 +186,9 @@
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+  .drag-handle {
+    touch-action: none;
+  }
+</style>
