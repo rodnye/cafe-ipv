@@ -2,7 +2,14 @@
   import { useAuthStore } from '@/stores/auth';
   import { useRouter } from 'vue-router';
   import { Button } from '@/components/ui/button';
-  import { Menu, Home, Package, Calendar, LogOut } from 'lucide-vue-next';
+  import {
+    Menu,
+    Home,
+    Package,
+    Calendar,
+    Settings,
+    LogOut,
+  } from 'lucide-vue-next';
   import { ref } from 'vue';
   import {
     Sheet,
@@ -28,6 +35,7 @@
     { path: '/', name: 'Inicio', icon: Home },
     { path: '/products', name: 'Productos', icon: Package },
     { path: '/daily', name: 'Tabla Diaria', icon: Calendar },
+    { path: '/settings', name: 'Configuración', icon: Settings },
   ];
 </script>
 
