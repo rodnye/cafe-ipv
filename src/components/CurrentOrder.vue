@@ -1,35 +1,27 @@
 <script setup lang="ts">
   import { computed } from 'vue';
-  import type { Product } from '@/types';
+  import type { ICartItem, IProductId } from '@/types';
   import { Button } from '@/components/ui/button';
   import { Minus, Edit, Plus, Trash2, ShoppingCartIcon } from 'lucide-vue-next';
   import { cn } from '@/lib/utils';
 
   const props = defineProps<{
-    items: { productId: string; quantity: number }[];
-    products: Product[];
-    dayPrices: Map<string, number>;
+    items: ICartItem[];
     isEditing: boolean;
   }>();
 
   const emit = defineEmits<{
-    (e: 'increment', productId: string): void;
-    (e: 'decrement', productId: string): void;
-    (e: 'remove', productId: string): void;
+    (e: 'increment', productId: IProductId): void;
+    (e: 'decrement', productId: IProductId): void;
+    (e: 'remove', productId: IProductId): void;
     (e: 'save'): void;
     (e: 'cancel'): void;
   }>();
 
-  const getProductName = (productId: string) => {
-    return (
-      props.products.find((p) => p.id === productId)?.name || 'Desconocido'
-    );
-  };
-
   const total = computed(() => {
     let sum = 0;
     props.items.forEach((item) => {
-      const price = props.dayPrices.get(item.productId) || 0;
+      const price = item.price;
       sum += price * item.quantity;
     });
     return sum;
@@ -64,7 +56,7 @@
         :key="item.productId"
         class="flex items-center justify-between border-b pb-2"
       >
-        <span class="flex-1">{{ getProductName(item.productId) }}</span>
+        <span class="flex-1">{{ item.name }}</span>
         <div class="flex items-center gap-1">
           <Button
             variant="outline"

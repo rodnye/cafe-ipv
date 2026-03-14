@@ -1,184 +1,120 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import type { Day, DayProductEntry } from '@/types';
-import { useProductStore } from './product';
+import { ref } from 'vue';
+import type { IDay, IDayId } from '@/types';
 
-const STORAGE_KEY = 'cafeteria-days';
+const STORAGE_PREFIX = 'v2.cafeteria-day-';
+const DAYS_LIST_KEY = 'v2.cafeteria-days-indexes';
 
 export const useDayStore = defineStore('days', () => {
-  const days = ref<Day[]>([]);
-  const currentDayId = ref<string | null>(null);
-  const productStore = useProductStore();
+  const daysList = ref<IDayId[]>([]);
+  const currentDayId = ref<IDayId>(null as never);
+  const currentDay = ref<IDay>(null as never);
+  const isLoading = ref(true);
 
-  const load = () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      days.value = JSON.parse(stored);
-    } else {
-      createDayFromPrevious(null);
-    }
-  };
+  const setCurrentDay = async (dayId: IDayId) => {
+    isLoading.value = true;
+    const day = await loadDay(dayId);
+    isLoading.value = false;
 
-  const save = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(days.value));
-  };
+    if (!day) throw new Error('"IDayId:' + dayId + '" not found');
 
-  const createDayFromPrevious = (previousDayId: string | null) => {
-    const today = new Date().toISOString().split('T')[0]!;
-
-    const existing = days.value.find((d) => d.date === today);
-    if (existing) {
-      currentDayId.value = existing.id;
-      return;
-    }
-
-    let products: DayProductEntry[] = [];
-
-    if (previousDayId) {
-      const prevDay = days.value.find((d) => d.id === previousDayId);
-      if (prevDay) {
-        products = prevDay.products.map((p) => ({
-          productId: p.productId,
-          productName: p.productName,
-          inicio: p.final,
-          entrada: 0,
-          salida: 0,
-          total: p.final,
-          precio: p.precio,
-          vendido: 0,
-          importe: 0,
-          final: p.final,
-        }));
-        products.forEach((p) => {
-          p.final = p.inicio + p.entrada - p.salida;
-          p.importe = p.vendido * p.precio;
-        });
-      }
-    } else {
-      products = productStore.products.map((prod) => ({
-        productId: prod.id,
-        productName: prod.name,
-        inicio: 0,
-        entrada: 0,
-        salida: 0,
-        total: 0,
-        precio: prod.price,
-        vendido: 0,
-        importe: 0,
-        final: 0,
-      }));
-    }
-
-    const newDay: Day = {
-      id: crypto.randomUUID(),
-      date: today,
-      products,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    days.value.push(newDay);
-    currentDayId.value = newDay.id;
-    save();
-  };
-
-  const setCurrentDay = (dayId: string) => {
+    currentDay.value = day;
     currentDayId.value = dayId;
   };
 
-  const currentDay = computed(() => {
-    return days.value.find((d) => d.id === currentDayId.value) || null;
-  });
-
-  const syncWithOrders = (
-    dayId: string,
-    orders: { items: { productId: string; quantity: number }[] }[]
-  ) => {
-    const day = days.value.find((d) => d.id === dayId);
-    if (!day) return;
-
-    // Agregar cantidades por producto
-    const quantities = new Map<string, number>();
-    orders.forEach((order) => {
-      order.items.forEach((item) => {
-        const current = quantities.get(item.productId) || 0;
-        quantities.set(item.productId, current + item.quantity);
-      });
-    });
-
-    day.products.forEach((entry) => {
-      const qty = quantities.get(entry.productId) || 0;
-      entry.vendido = qty;
-      entry.importe = qty * entry.precio;
-      entry.total = entry.inicio + entry.entrada - entry.salida;
-      entry.final = entry.total - entry.vendido;
-    });
-
-    day.updatedAt = Date.now();
-    save();
+  const saveDaysList = async () => {
+    localStorage.setItem(DAYS_LIST_KEY, JSON.stringify(daysList.value));
   };
 
-  const addProductToDay = (
-    dayId: string,
-    productId: string,
-    productName: string,
-    defaultPrice: number
-  ) => {
-    const day = days.value.find((d) => d.id === dayId);
-    if (!day) return;
-    if (day.products.some((p) => p.productId === productId)) return;
-    const newEntry: DayProductEntry = {
-      productId,
-      productName,
-      inicio: 0,
-      entrada: 0,
-      salida: 0,
-      total: 0,
-      precio: defaultPrice,
-      vendido: 0,
-      importe: 0,
-      final: 0,
-    };
-    day.products.push(newEntry);
-    day.updatedAt = Date.now();
-    save();
+  const loadDay = async (dayId: IDayId) => {
+    const key = STORAGE_PREFIX + dayId;
+    const stored = localStorage.getItem(key);
+    return stored ? (JSON.parse(stored) as IDay) : null;
   };
 
-  const updateDayEntry = (
-    dayId: string,
-    productId: string,
-    field: keyof DayProductEntry,
-    value: number
-  ) => {
-    const day = days.value.find((d) => d.id === dayId);
-    if (!day) return;
-    const entry = day.products.find((p) => p.productId === productId);
-    if (!entry) return;
-    if (
-      field === 'inicio' ||
-      field === 'entrada' ||
-      field === 'salida' ||
-      field === 'precio'
-    ) {
-      entry[field] = value;
-      if (field === 'precio') {
-        entry.importe = entry.vendido * entry.precio;
-      }
-      entry.total = entry.inicio + entry.entrada - entry.salida;
-      entry.final = entry.total - entry.vendido;
-      day.updatedAt = Date.now();
-      save();
+  const saveDay = async (day: IDay) => {
+    const key = STORAGE_PREFIX + day.id;
+    localStorage.setItem(key, JSON.stringify(day));
+
+    // force update
+    if (day.id === currentDayId.value) {
+      currentDay.value = { ...day };
+    }
+    if (!daysList.value.includes(day.id)) {
+      daysList.value = [...daysList.value, day.id];
+      await saveDaysList();
     }
   };
 
+  const createDay = async (
+    date: Date,
+    prevDay: IDay | IDayId | null = null
+  ) => {
+    let products: IDay['products'] = [];
+
+    if (typeof prevDay === 'string') prevDay = await loadDay(prevDay);
+    if (prevDay) {
+      products = prevDay.products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        inicio: p.final,
+        entrada: 0,
+        salida: 0,
+        total: p.final,
+        price: p.price,
+        vendido: 0,
+        importe: 0,
+        final: p.final,
+      }));
+    }
+
+    const newDay: IDay = {
+      id: ('day-' + date.toISOString().split('T')[0]!) as IDayId,
+      date: date.toISOString().split('T')[0]!,
+      products,
+      orders: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    await saveDay(newDay);
+    return newDay;
+  };
+
+  const init = async () => {
+    isLoading.value = true;
+    const stored = localStorage.getItem(DAYS_LIST_KEY);
+    daysList.value = stored ? JSON.parse(stored) : [];
+
+    if (daysList.value.length === 0) {
+      const newDay = await createDay(new Date(), null);
+      await setCurrentDay(newDay.id);
+      await saveDaysList();
+    } else {
+      await setCurrentDay(daysList.value[0]!);
+    }
+    isLoading.value = false;
+  };
+
   return {
-    days,
+    // state
+    daysList,
     currentDayId,
     currentDay,
-    load,
-    createDayFromPrevious,
+
+    init,
+    isLoading,
+    createDay,
     setCurrentDay,
-    syncWithOrders,
-    addProductToDay,
-    updateDayEntry,
+
+    loadDay,
+    saveDay,
+    getDay: async (dayId?: IDayId) => {
+      if (!dayId) return currentDay.value;
+
+      const day = await loadDay(dayId);
+      if (!day) throw new Error(`"IDayId:${dayId} not exists`);
+      return day;
+    },
   };
 });

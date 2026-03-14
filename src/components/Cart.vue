@@ -1,7 +1,7 @@
 // src/components/Cart.vue
 
 <script setup lang="ts">
-  import type { CartItem } from '@/types';
+  import type { ICartItem } from '@/types';
   import {
     Card,
     CardContent,
@@ -12,7 +12,7 @@
   import { ShoppingCart } from 'lucide-vue-next';
 
   defineProps<{
-    items: CartItem[];
+    items: ICartItem[];
     total: number;
   }>();
 </script>

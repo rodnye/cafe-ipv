@@ -1,8 +1,9 @@
 <script setup lang="ts">
-  import { ref, computed, onMounted, watch } from 'vue';
-  import { useProductStore } from '@/stores/product';
+  import { ref, computed, onMounted } from 'vue';
   import { useDayStore } from '@/stores/day';
+  import { useProductStore } from '@/stores/product';
   import { useOrderStore } from '@/stores/order';
+  import { useTableStore } from '@/stores/table';
   import CurrentOrder from '@/components/CurrentOrder.vue';
   import OrderList from '@/components/OrderList.vue';
   import { Button } from '@/components/ui/button';
@@ -15,48 +16,51 @@
     SheetTitle,
     SheetDescription,
   } from '@/components/ui/sheet';
+  import type { ICartItem, IOrderId, IProductId } from '@/types';
 
-  const productStore = useProductStore();
   const dayStore = useDayStore();
+  const productStore = useProductStore();
   const orderStore = useOrderStore();
+  const tableStore = useTableStore();
 
   onMounted(() => {
-    productStore.load();
-    dayStore.load();
-    orderStore.load();
-    if (!dayStore.currentDay) {
-      dayStore.createDayFromPrevious(null);
-    }
-    refreshDayFromOrders();
+    console.log('Init!!');
+    dayStore.init();
   });
 
   // Mobile sheet states
   const showOrdersSheet = ref(false);
   const showProductSheet = ref(false);
-
-  // Search
   const searchQuery = ref('');
 
   const filteredProducts = computed(() => {
-    if (!searchQuery.value) return productStore.products;
+    if (!searchQuery.value) return productStore.currentProducts;
     const q = searchQuery.value.toLowerCase();
-    return productStore.products.filter((p) =>
+    return productStore.currentProducts.filter((p) =>
       p.name.toLowerCase().includes(q)
     );
   });
 
   // Current order
-  const currentOrderItems = ref<{ productId: string; quantity: number }[]>([]);
+  const currentOrderItems = ref<ICartItem[]>([]);
   const editingOrderId = ref<string | null>(null);
 
-  const addToCurrentOrder = (productId: string) => {
+  const addToCurrentOrder = (productId: IProductId) => {
     const existing = currentOrderItems.value.find(
       (item) => item.productId === productId
     );
     if (existing) {
       existing.quantity++;
     } else {
-      currentOrderItems.value.push({ productId, quantity: 1 });
+      const product = productStore.currentProducts.find(
+        (p) => p.id === productId
+      )!;
+      currentOrderItems.value.push({
+        productId,
+        quantity: 1,
+        name: product.name,
+        price: product.price,
+      });
     }
   };
 
@@ -85,30 +89,11 @@
     editingOrderId.value = null;
   };
 
-  // Day prices map
-  const dayPricesMap = computed(() => {
-    const map = new Map<string, number>();
-    if (dayStore.currentDay) {
-      dayStore.currentDay.products.forEach((p) => {
-        map.set(p.productId, p.precio);
-      });
-    }
-    return map;
-  });
-
-  // Orders for current day
-  const ordersForCurrentDay = computed(() => {
-    if (!dayStore.currentDay) return [];
-    return orderStore.getOrdersByDay(dayStore.currentDay.id);
-  });
-
   const currentOrderTotal = computed(() => {
-    let total = 0;
-    currentOrderItems.value.forEach((item) => {
-      const price = dayPricesMap.value.get(item.productId) || 0;
-      total += price * item.quantity;
-    });
-    return total;
+    return currentOrderItems.value.reduce((sum, item) => {
+      const price = item.price;
+      return sum + price * item.quantity;
+    }, 0);
   });
 
   const currentItemCount = computed(() => {
@@ -118,83 +103,57 @@
     );
   });
 
-  // Edit order
-  const editOrder = (orderId: string) => {
-    const order = orderStore.orders.find((o) => o.id === orderId);
+  const editOrder = async (orderId: IOrderId) => {
+    const order = await orderStore.getOrderById(dayStore.currentDayId, orderId);
     if (!order) return;
-    currentOrderItems.value = order.items.map((item) => ({ ...item }));
+    const productsMap = await productStore.getProductMap(dayStore.currentDayId);
+    currentOrderItems.value = order.items.map(({ productId, quantity }) => {
+      const { name, price } = productsMap.get(productId)!;
+      return {
+        productId,
+        quantity,
+        name,
+        price,
+      };
+    });
     editingOrderId.value = orderId;
     showOrdersSheet.value = false;
   };
 
-  // Save order
-  const saveOrder = () => {
-    if (!dayStore.currentDay) return;
+  const saveOrder = async () => {
     const items = currentOrderItems.value.filter((item) => item.quantity > 0);
     if (items.length === 0) return;
 
     if (editingOrderId.value) {
-      orderStore.updateOrder(editingOrderId.value, items);
+      await orderStore.updateOrder(
+        dayStore.currentDayId,
+        editingOrderId.value,
+        items
+      );
     } else {
-      orderStore.createOrder(dayStore.currentDay.id, items);
+      await orderStore.createOrder(dayStore.currentDayId, items);
     }
 
-    refreshDayFromOrders();
+    await tableStore.syncWithOrders(dayStore.currentDayId);
     clearCurrentOrder();
     showProductSheet.value = false;
   };
 
-  // Delete order
-  const deleteOrder = (orderId: string) => {
+  const deleteOrder = async (orderId: IOrderId) => {
+    if (!dayStore.currentDayId) return;
     if (!confirm('¿Eliminar este pedido?')) return;
-    orderStore.deleteOrder(orderId);
-    refreshDayFromOrders();
+    await orderStore.deleteOrder(dayStore.currentDayId, orderId);
     if (editingOrderId.value === orderId) {
       clearCurrentOrder();
     }
+    await tableStore.syncWithOrders(dayStore.currentDayId);
   };
-
-  const refreshDayFromOrders = () => {
-    if (!dayStore.currentDay) return;
-    const dayId = dayStore.currentDay.id;
-    const orders = orderStore.getOrdersByDay(dayId);
-
-    const productIdsInOrders = new Set<string>();
-    orders.forEach((order) => {
-      order.items.forEach((item) => productIdsInOrders.add(item.productId));
-    });
-    productIdsInOrders.forEach((productId) => {
-      const exists = dayStore.currentDay!.products.some(
-        (p) => p.productId === productId
-      );
-      if (!exists) {
-        const product = productStore.products.find((p) => p.id === productId);
-        if (product) {
-          dayStore.addProductToDay(
-            dayId,
-            productId,
-            product.name,
-            product.price
-          );
-        }
-      }
-    });
-
-    dayStore.syncWithOrders(dayId, orders);
-  };
-
-  watch(
-    () => dayStore.currentDayId,
-    () => {
-      clearCurrentOrder();
-      refreshDayFromOrders();
-    }
-  );
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
-    <!-- Desktop Layout (hidden on mobile) -->
+  <div v-if="dayStore.isLoading">Cargando</div>
+  <div v-else class="flex h-full flex-col">
+    <!-- Desktop Layout -->
     <div class="hidden lg:grid lg:h-full lg:grid-cols-3 lg:gap-6">
       <!-- Left column - Products -->
       <div class="col-span-2 overflow-y-auto pr-2">
@@ -232,7 +191,7 @@
             v-if="filteredProducts.length === 0"
             class="text-muted-foreground col-span-2 py-8 text-center"
           >
-            No hay productos
+            No hay productos para este día
           </div>
         </div>
       </div>
@@ -245,8 +204,6 @@
         <div class="space-y-4">
           <CurrentOrder
             :items="currentOrderItems"
-            :products="productStore.products"
-            :day-prices="dayPricesMap"
             :is-editing="!!editingOrderId"
             @increment="addToCurrentOrder"
             @decrement="removeFromCurrentOrder"
@@ -259,13 +216,11 @@
             <div class="mb-3 flex items-center justify-between">
               <h3 class="font-medium">Pedidos del día</h3>
               <span class="text-muted-foreground text-sm">
-                {{ ordersForCurrentDay.length }} pedidos
+                {{ orderStore.currentOrders.length }} pedidos
               </span>
             </div>
             <OrderList
-              :orders="ordersForCurrentDay"
-              :products="productStore.products"
-              :day-prices="dayPricesMap"
+              :orders="orderStore.currentOrders"
               @edit="editOrder"
               @delete="deleteOrder"
             />
@@ -274,9 +229,9 @@
       </div>
     </div>
 
-    <!-- Mobile Layout (hidden on desktop) -->
+    <!-- Mobile Layout -->
     <div class="flex h-full flex-col lg:hidden">
-      <!-- Current order summary (sticky top) -->
+      <!-- Current order summary -->
       <div class="bg-background sticky top-0 z-10 border-b p-3">
         <div class="flex items-center justify-between">
           <div>
@@ -307,8 +262,6 @@
       <div class="flex-1 overflow-y-auto p-3">
         <CurrentOrder
           :items="currentOrderItems"
-          :products="productStore.products"
-          :day-prices="dayPricesMap"
           :is-editing="!!editingOrderId"
           @increment="addToCurrentOrder"
           @decrement="removeFromCurrentOrder"
@@ -378,7 +331,7 @@
                 v-if="filteredProducts.length === 0"
                 class="text-muted-foreground py-8 text-center"
               >
-                No hay productos
+                No hay productos para este día
               </div>
             </div>
           </div>
@@ -392,14 +345,12 @@
         <SheetHeader class="border-b p-4">
           <SheetTitle>Historial de pedidos del día</SheetTitle>
           <SheetDescription>
-            {{ ordersForCurrentDay.length }} pedidos registrados
+            {{ orderStore.currentOrders.length }} pedidos registrados
           </SheetDescription>
         </SheetHeader>
         <div class="h-full overflow-y-auto p-4">
           <OrderList
-            :orders="ordersForCurrentDay"
-            :products="productStore.products"
-            :day-prices="dayPricesMap"
+            :orders="orderStore.currentOrders"
             @edit="editOrder"
             @delete="deleteOrder"
           />

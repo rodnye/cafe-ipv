@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useDayStore } from '@/stores/day';
 
 const routes = [
   {
@@ -39,7 +40,9 @@ router.beforeEach((to, _from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login');
   } else if (to.meta.requiresGuest && isAuthenticated) {
-    next('/');
+    useDayStore()
+      .init()
+      .then(() => next('/'));
   } else {
     next();
   }

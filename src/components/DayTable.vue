@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { Day, DayProductEntry } from '@/types';
+  import type { IDay, IDayId, IProductId } from '@/types';
   import {
     Table,
     TableBody,
@@ -10,20 +10,20 @@
   } from '@/components/ui/table';
   import { Input } from '@/components/ui/input';
 
-  const props = defineProps<{ day: Day }>();
+  const props = defineProps<{ day: IDay }>();
   const emit = defineEmits<{
     (
       e: 'update',
-      dayId: string,
-      productId: string,
-      field: keyof DayProductEntry,
+      dayId: IDayId,
+      productId: IProductId,
+      field: 'inicio' | 'entrada' | 'salida' | 'price',
       value: number
     ): void;
   }>();
 
   const updateField = (
-    productId: string,
-    field: keyof DayProductEntry,
+    productId: IProductId,
+    field: 'inicio' | 'entrada' | 'salida' | 'price',
     event: Event
   ) => {
     const input = event.target as HTMLInputElement;
@@ -51,17 +51,17 @@
       <TableBody>
         <TableRow
           v-for="entry in day.products"
-          :key="entry.productId"
+          :key="entry.id"
           class="hover:bg-muted/30"
         >
           <TableCell class="font-medium whitespace-nowrap">{{
-            entry.productName
+            entry.name
           }}</TableCell>
           <TableCell>
             <Input
               type="number"
               :value="entry.inicio"
-              @change="(e: Event) => updateField(entry.productId, 'inicio', e)"
+              @input="(e: Event) => updateField(entry.id, 'inicio', e)"
               class="h-8 w-16 md:w-20"
               min="0"
             />
@@ -70,7 +70,7 @@
             <Input
               type="number"
               :value="entry.entrada"
-              @change="(e: Event) => updateField(entry.productId, 'entrada', e)"
+              @input="(e: Event) => updateField(entry.id, 'entrada', e)"
               class="h-8 w-16 md:w-20"
               min="0"
             />
@@ -79,7 +79,7 @@
             <Input
               type="number"
               :value="entry.salida"
-              @change="(e: Event) => updateField(entry.productId, 'salida', e)"
+              @input="(e: Event) => updateField(entry.id, 'salida', e)"
               class="h-8 w-16 md:w-20"
               min="0"
             />
@@ -88,8 +88,8 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.precio"
-              @change="(e: Event) => updateField(entry.productId, 'precio', e)"
+              :value="entry.price"
+              @input="(e: Event) => updateField(entry.id, 'price', e)"
               class="h-8 w-16 md:w-20"
               min="0"
             />

@@ -1,100 +1,95 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { Product } from '@/types';
-
-const STORAGE_KEY = 'cafeteria-products';
+import { useDayStore } from './day';
+import type { IDayId, IProduct, IProductId } from '@/types';
+import { computed } from 'vue';
 
 export const useProductStore = defineStore('products', () => {
-  const products = ref<Product[]>([]);
+  const dayStore = useDayStore();
 
-  const load = () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      products.value = JSON.parse(stored);
-    } else {
-      products.value = [
-        {
-          id: crypto.randomUUID(),
-          name: 'Fanguito',
-          price: 600,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Refresco Lata',
-          price: 250,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'HUpman c/filtro',
-          price: 450,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'HUpman s/filtro',
-          price: 400,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Cigarro Criollo',
-          price: 300,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Condones',
-          price: 50,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'BlackOut',
-          price: 160,
-          createdAt: Date.now(),
-        },
-        {
-          id: crypto.randomUUID(),
-          name: 'Doble Deleite',
-          price: 120,
-          createdAt: Date.now(),
-        },
-      ];
-      save();
-    }
+  const getProductMap = async (dayId?: IDayId) => {
+    const day = await dayStore.getDay(dayId);
+    return new Map(day.products.map((p) => [p.id, p]));
   };
 
-  const save = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products.value));
-  };
+  const currentProducts = computed(() => dayStore.currentDay?.products ?? []);
 
-  const addProduct = (product: Omit<Product, 'id' | 'createdAt'>) => {
-    const newProduct: Product = {
-      ...product,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
+  const addProduct = async (dayId: IDayId, name: string, price: number) => {
+    const day = await dayStore.getDay(dayId);
+
+    const newProduct: IProduct = {
+      id: crypto.randomUUID() as IProductId,
+      name: name,
+      inicio: 0,
+      entrada: 0,
+      salida: 0,
+      total: 0,
+      price: price,
+      vendido: 0,
+      importe: 0,
+      final: 0,
     };
-    products.value.push(newProduct);
-    save();
+
+    day.products.splice(0, 0, newProduct);
+    day.updatedAt = Date.now();
+    await dayStore.saveDay(day);
   };
 
-  const updateProduct = (
-    id: string,
-    data: Partial<Omit<Product, 'id' | 'createdAt'>>
+  const updateProduct = async (
+    dayId: IDayId,
+    productId: string,
+    updates: Partial<Pick<IProduct, 'name' | 'price'>>
   ) => {
-    const index = products.value.findIndex((p) => p.id === id);
-    if (index !== -1) {
-      products.value[index] = { ...products.value[index]!, ...data };
-      save();
+    const day = await dayStore.getDay(dayId);
+
+    const product = day.products.find((p) => p.id === productId);
+    if (!product) return;
+
+    if (updates.name) {
+      product.name = updates.name;
     }
+    if (updates.price) {
+      const hasOrders = day.orders.some((order) =>
+        order.items.some((item) => item.productId === productId)
+      );
+
+      if (hasOrders)
+        throw new Error(
+          'No es posible actualizar el precio de este producto. Ya hay pedidos asociados a él. Por favor, cree un nuevo producto con un nombre similar'
+        );
+      product.price = updates.price;
+      product.importe = product.vendido * product.price;
+    }
+
+    day.updatedAt = Date.now();
+    await dayStore.saveDay(day);
   };
 
-  const deleteProduct = (id: string) => {
-    products.value = products.value.filter((p) => p.id !== id);
-    save();
+  const deleteProduct = async (dayId: IDayId, productId: string) => {
+    const day = await dayStore.getDay(dayId);
+
+    const hasOrders = day.orders.some((order) =>
+      order.items.some((item) => item.productId === productId)
+    );
+
+    if (hasOrders) {
+      throw new Error(
+        'Este producto ya se ha vendido a varios clientes, no se puede eliminar'
+      );
+    }
+
+    day.products = day.products.filter((p) => p.id !== productId);
+    day.updatedAt = Date.now();
+    await dayStore.saveDay(day);
   };
 
-  return { products, load, addProduct, updateProduct, deleteProduct };
+  return {
+    // getters
+    getProductMap,
+    currentProducts,
+
+    // mutations
+    addProduct,
+    updateProduct,
+    deleteProduct,
+  };
 });

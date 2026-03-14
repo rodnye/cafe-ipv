@@ -1,7 +1,6 @@
 <script setup lang="ts">
-  import { computed, onMounted, ref } from 'vue';
+  import { computed, ref } from 'vue';
   import { useDayStore } from '@/stores/day';
-  import { useProductStore } from '@/stores/product';
   import { Button } from '@/components/ui/button';
   import {
     Select,
@@ -12,30 +11,22 @@
   } from '@/components/ui/select';
   import DayTable from '@/components/DayTable.vue';
   import { CalendarPlus } from 'lucide-vue-next';
+  import { useTableStore } from '@/stores/table';
 
   const dayStore = useDayStore();
-  const productStore = useProductStore();
-
-  onMounted(() => {
-    productStore.load();
-    dayStore.load();
-  });
-
+  const tableStore = useTableStore();
   const selectedDayId = ref(dayStore.currentDayId);
 
   const daysOptions = computed(() => {
-    return dayStore.days.map((d) => ({ value: d.id, label: d.date }));
+    return dayStore.daysList.map((dayId) => ({
+      value: dayId,
+      label: dayId.replace(/^day\-/, ''),
+    }));
   });
 
-  const currentDay = computed(() => {
-    return dayStore.days.find((d) => d.id === selectedDayId.value) || null;
-  });
-
-  const createNewDay = () => {
-    dayStore.createDayFromPrevious(selectedDayId.value);
-    setTimeout(() => {
-      selectedDayId.value = dayStore.currentDayId;
-    });
+  const createNewDay = async () => {
+    await dayStore.createDay(new Date(), selectedDayId.value);
+    selectedDayId.value = dayStore.currentDayId;
   };
 </script>
 
@@ -70,8 +61,8 @@
       </div>
     </div>
 
-    <div v-if="currentDay">
-      <DayTable :day="currentDay" @update="dayStore.updateDayEntry" />
+    <div v-if="dayStore.currentDay">
+      <DayTable :day="dayStore.currentDay" @update="tableStore.updateField" />
     </div>
     <div
       v-else

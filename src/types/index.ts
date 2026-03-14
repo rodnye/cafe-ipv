@@ -1,47 +1,44 @@
-export interface Product {
-  id: string;
+export type IProductId = string & { readonly __brand: unique symbol };
+export interface IProduct {
+  id: IProductId;
   name: string;
   price: number;
-  createdAt: number;
-}
 
-export interface DayProductEntry {
-  productId: string;
-  productName: string;
   inicio: number;
   entrada: number;
   salida: number;
   total: number;
-  precio: number;
   vendido: number;
   importe: number;
   final: number;
 }
 
-export interface Day {
-  id: string;
-  date: string;
-  products: DayProductEntry[];
+export interface IOrderItem {
+  productId: IProductId;
+  quantity: number;
+}
+
+export type IOrderId = string & { readonly __brand: unique symbol };
+export interface IOrder {
+  id: IOrderId;
+  items: IOrderItem[];
   createdAt: number;
   updatedAt: number;
 }
 
-export interface CartItem {
-  productId: string;
+export type IDayId = string & { readonly __brand: unique symbol };
+export interface IDay {
+  id: IDayId;
+  date: string;
+  products: IProduct[];
+  orders: IOrder[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ICartItem {
+  productId: IProductId;
   name: string;
   price: number;
   quantity: number;
-}
-
-export interface OrderItem {
-  productId: string;
-  quantity: number;
-}
-
-export interface Order {
-  id: string;
-  dayId: string;
-  items: OrderItem[];
-  createdAt: number;
-  updatedAt: number;
 }

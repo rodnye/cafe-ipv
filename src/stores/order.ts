@@ -1,70 +1,88 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import type { Order, OrderItem } from '@/types';
-
-const STORAGE_KEY = 'cafeteria-orders';
+import { useDayStore } from './day';
+import type { ICartItem, IDayId, IOrder, IOrderId } from '@/types';
+import { computed } from 'vue';
 
 export const useOrderStore = defineStore('orders', () => {
-  const orders = ref<Order[]>([]);
+  const dayStore = useDayStore();
 
-  const load = () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      orders.value = JSON.parse(stored);
-    } else {
-      orders.value = [];
-    }
+  const currentOrders = computed(() => dayStore.currentDay?.orders ?? []);
+
+  const getOrderById = async (dayId: IDayId, orderId: IOrderId) => {
+    return (
+      (await dayStore.getDay(dayId)).orders.find((o) => o.id === orderId) ||
+      null
+    );
   };
 
-  const save = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(orders.value));
-  };
+  const createOrder = async (dayId: IDayId, items: ICartItem[]) => {
+    const day = await dayStore.getDay(dayId);
 
-  const getOrdersByDay = (dayId: string): Order[] => {
-    return orders.value.filter((o) => o.dayId === dayId);
-  };
-
-  const createOrder = (dayId: string, items: OrderItem[]) => {
-    const newOrder: Order = {
-      id: crypto.randomUUID(),
-      dayId,
-      items: items.map((item) => ({
-        ...item,
-      })),
+    const newOrder: IOrder = {
+      id: crypto.randomUUID() as IOrderId,
+      items,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    orders.value.splice(0, 0, newOrder);
-    save();
+    console.log(newOrder);
+    day.orders.unshift(newOrder);
+    day.updatedAt = Date.now();
+
+    await dayStore.saveDay(day);
+
     return newOrder;
   };
 
-  const updateOrder = (orderId: string, items: OrderItem[]) => {
-    const index = orders.value.findIndex((o) => o.id === orderId);
-    if (index !== -1) {
-      orders.value[index] = {
-        ...orders.value[index]!,
-        items: items.map((item) => ({
-          ...item,
-        })),
-        updatedAt: Date.now(),
-      };
-      save();
-    }
+  const updateOrder = async (
+    dayId: IDayId,
+    orderId: string,
+    items: ICartItem[]
+  ) => {
+    const day = await dayStore.getDay(dayId);
+
+    const index = day.orders.findIndex((o) => o.id === orderId);
+    if (index === -1) return;
+
+    day.orders[index] = {
+      ...day.orders[index]!,
+      items: items.map((item) => ({ ...item })),
+      updatedAt: Date.now(),
+    };
+    day.updatedAt = Date.now();
+
+    await dayStore.saveDay(day);
   };
 
-  const deleteOrder = (orderId: string) => {
-    orders.value = orders.value.filter((o) => o.id !== orderId);
-    save();
+  const deleteOrder = async (dayId: IDayId, orderId: IOrderId) => {
+    const day = await dayStore.getDay(dayId);
+
+    day.orders = day.orders.filter((o) => o.id !== orderId);
+    day.updatedAt = Date.now();
+
+    await dayStore.saveDay(day);
+  };
+
+  const calculateOrderTotal = (
+    order: IOrder,
+    productMap: Map<string, number>
+  ) => {
+    return order.items.reduce((sum, item) => {
+      const price = productMap.get(item.productId) || 0;
+      return sum + price * item.quantity;
+    }, 0);
   };
 
   return {
-    orders,
-    load,
-    save,
-    getOrdersByDay,
+    // getters
+    getOrderById,
+    currentOrders,
+
+    // mutations
     createOrder,
     updateOrder,
     deleteOrder,
+
+    // utils
+    calculateOrderTotal,
   };
 });

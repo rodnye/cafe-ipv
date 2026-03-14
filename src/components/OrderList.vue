@@ -1,27 +1,25 @@
 <script setup lang="ts">
-  import type { Order, Product } from '@/types';
+  import type { IOrder, IOrderId } from '@/types';
   import { Button } from '@/components/ui/button';
   import { Edit, Trash2 } from 'lucide-vue-next';
 
   const props = defineProps<{
-    orders: Order[];
-    products: Product[];
-    dayPrices: Map<string, number>;
+    orders: IOrder[];
   }>();
 
   const emit = defineEmits<{
-    (e: 'edit', orderId: string): void;
-    (e: 'delete', orderId: string): void;
+    (e: 'edit', orderId: IOrderId): void;
+    (e: 'delete', orderId: IOrderId): void;
   }>();
 
-  const orderTotal = (order: Order) => {
+  /*const orderTotal = (order: IOrder) => {
     return order.items.reduce((sum, item) => {
       const price = props.dayPrices.get(item.productId) || 0;
       return sum + price * item.quantity;
     }, 0);
-  };
+  };*/
 
-  const itemCount = (order: Order) => {
+  const itemCount = (order: IOrder) => {
     return order.items.reduce((sum, item) => sum + item.quantity, 0);
   };
 </script>
@@ -76,9 +74,9 @@
             </Button>
           </div>
         </div>
-        <div class="text-primary mt-1 text-right text-sm font-bold">
+        <!--div class="text-primary mt-1 text-right text-sm font-bold">
           {{ orderTotal(order) }} CUP
-        </div>
+        </div-->
       </div>
     </div>
   </div>

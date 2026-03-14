@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue';
+  import { ref } from 'vue';
   import { useProductStore } from '@/stores/product';
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
@@ -19,9 +19,10 @@
     DialogTitle,
   } from '@/components/ui/dialog';
   import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
+  import { useDayStore } from '@/stores/day';
 
   const productStore = useProductStore();
-  onMounted(() => productStore.load());
+  const dayStore = useDayStore();
 
   const showDialog = ref(false);
   const editingProduct = ref<{ id?: string; name: string; price: number }>({
@@ -39,24 +40,29 @@
     showDialog.value = true;
   };
 
-  const save = () => {
+  const save = async () => {
     if (editingProduct.value.id) {
-      productStore.updateProduct(editingProduct.value.id, {
-        name: editingProduct.value.name,
-        price: editingProduct.value.price,
-      });
+      await productStore.updateProduct(
+        dayStore.currentDayId,
+        editingProduct.value.id,
+        {
+          name: editingProduct.value.name,
+          price: editingProduct.value.price,
+        }
+      );
     } else {
-      productStore.addProduct({
-        name: editingProduct.value.name,
-        price: editingProduct.value.price,
-      });
+      await productStore.addProduct(
+        dayStore.currentDayId,
+        editingProduct.value.name,
+        editingProduct.value.price
+      );
     }
     showDialog.value = false;
   };
 
-  const confirmDelete = (id: string) => {
+  const confirmDelete = async (productId: string) => {
     if (confirm('¿Eliminar producto?')) {
-      productStore.deleteProduct(id);
+      await productStore.deleteProduct(dayStore.currentDayId, productId);
     }
   };
 </script>
@@ -84,7 +90,7 @@
         </TableHeader>
         <TableBody>
           <TableRow
-            v-for="product in productStore.products"
+            v-for="product in productStore.currentProducts"
             :key="product.id"
             class="hover:bg-muted/30"
           >
@@ -138,9 +144,9 @@
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" @click="showDialog = false"
-            >Cancelar</Button
-          >
+          <Button variant="outline" @click="showDialog = false">
+            Cancelar
+          </Button>
           <Button @click="save">Guardar</Button>
         </DialogFooter>
       </DialogContent>
