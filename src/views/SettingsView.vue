@@ -18,10 +18,24 @@
     DialogHeader,
     DialogTitle,
   } from '@/components/ui/dialog';
-  import { Download, Upload, AlertTriangle } from 'lucide-vue-next';
+  import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from '@/components/ui/select';
+  import { Download, Upload, AlertTriangle, Trash2 } from 'lucide-vue-next';
+  import {
+    CURRENT_DAY_KEY,
+    DAYS_LIST_KEY,
+    STORAGE_PREFIX,
+    useDayStore,
+  } from '@/stores/day';
   import { useAuthStore } from '@/stores/auth';
 
   const router = useRouter();
+  const dayStore = useDayStore();
   const authStore = useAuthStore();
 
   // Export
@@ -34,6 +48,13 @@
   const importError = ref('');
   const confirmText = ref('');
   const isImporting = ref(false);
+
+  // Clear data
+  const showClearDialog = ref(false);
+  const clearMode = ref<'all' | 'keep-products'>('all');
+  const clearConfirmText = ref('');
+  const isClearing = ref(false);
+  const clearError = ref('');
 
   const handleExport = () => {
     const keys = Object.keys(localStorage);
@@ -91,7 +112,7 @@
       );
 
       if (!hasCafeData) {
-        throw new Error('El archivo no contiene datos válidos para la app :(');
+        throw new Error('El archivo no contiene datos válidos de Cafetería');
       }
 
       const keys = Object.keys(localStorage);
@@ -105,10 +126,10 @@
         localStorage.setItem(key, value as string);
       });
 
-      //r eset and reload
       showImportDialog.value = false;
       confirmText.value = '';
       importFile.value = null;
+
       authStore.logout();
       await router.push('/login');
       window.location.reload();
@@ -117,6 +138,67 @@
         error instanceof Error ? error.message : 'Error al importar';
     } finally {
       isImporting.value = false;
+    }
+  };
+
+  const handleClearData = async () => {
+    if (clearConfirmText.value !== 'borrar') {
+      clearError.value = 'Escribe "borrar" para confirmar';
+      return;
+    }
+
+    try {
+      isClearing.value = true;
+      clearError.value = '';
+
+      const keys = Object.keys(localStorage);
+      const cafeKeys = keys.filter((key) => key.startsWith('v2.cafeteria-'));
+
+      if (clearMode.value === 'all') {
+        // Delete everything
+        cafeKeys.forEach((key) => localStorage.removeItem(key));
+      } else {
+        const daysListStr = localStorage.getItem(DAYS_LIST_KEY);
+        let lastDayId: string | null = null;
+
+        if (daysListStr) {
+          const daysList = JSON.parse(daysListStr);
+          if (daysList.length > 0) lastDayId = daysList[0];
+        }
+
+        cafeKeys.forEach((key) => {
+          if (
+            key !== `${STORAGE_PREFIX}${lastDayId}` &&
+            key !== DAYS_LIST_KEY &&
+            key !== CURRENT_DAY_KEY
+          ) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Reset the last day's data
+        if (lastDayId) {
+          const lastDay = await dayStore.loadDay(lastDayId as any);
+          if (lastDay) {
+            lastDay.orders = [];
+            lastDay.updatedAt = Date.now();
+
+            const key = STORAGE_PREFIX + lastDay.id;
+            localStorage.setItem(key, JSON.stringify(lastDay));
+          }
+        }
+      }
+
+      showClearDialog.value = false;
+      clearConfirmText.value = '';
+
+      authStore.logout();
+      await router.push('/login');
+      window.location.reload();
+    } catch (error) {
+      clearError.value = 'Error al borrar los datos';
+    } finally {
+      isClearing.value = false;
     }
   };
 </script>
@@ -168,8 +250,32 @@
           </Button>
         </CardContent>
       </Card>
+
+      <!-- Clear Data Card -->
+      <Card class="border-destructive/20 md:col-span-2">
+        <CardHeader>
+          <CardTitle class="text-destructive flex items-center gap-2">
+            <Trash2 class="size-5" />
+            Borrar datos
+          </CardTitle>
+          <CardDescription>
+            Elimina permanentemente todos los datos de la aplicación
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            class="w-full gap-2"
+            @click="showClearDialog = true"
+          >
+            <Trash2 class="size-4" />
+            Borrar datos
+          </Button>
+        </CardContent>
+      </Card>
     </div>
 
+    <!-- Export Dialog -->
     <Dialog v-model:open="showExportDialog">
       <DialogContent class="sm:max-w-2xl">
         <DialogHeader>
@@ -196,12 +302,13 @@
       </DialogContent>
     </Dialog>
 
+    <!-- Import Dialog -->
     <Dialog v-model:open="showImportDialog">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle class="text-destructive flex items-center gap-2">
             <AlertTriangle class="size-5" />
-            ¡Advertencia!
+            Advertencia!
           </DialogTitle>
           <DialogDescription class="space-y-4">
             <p class="font-medium text-red-600 dark:text-red-400">
@@ -217,18 +324,27 @@
         </DialogHeader>
 
         <div class="space-y-4 py-2">
-          <Input
-            v-model="confirmText"
-            placeholder="Escribe 'borrar' para confirmar"
-            :disabled="isImporting"
-          />
-
           <div class="space-y-2">
             <label class="text-sm font-medium">Archivo de respaldo</label>
             <Input
               type="file"
               accept=".json,application/json"
               @change="handleFileSelect"
+              :disabled="isImporting"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium">
+              Escribe
+              <span class="bg-destructive/50 p-1 font-mono font-bold"
+                >borrar</span
+              >
+              para confirmar
+            </label>
+            <Input
+              v-model="confirmText"
+              placeholder="Escribe 'borrar' aquí"
               :disabled="isImporting"
             />
           </div>
@@ -251,9 +367,89 @@
             @click="handleImport"
             :disabled="confirmText !== 'borrar' || !importFile || isImporting"
           >
-            <Upload v-if="!isImporting" class="mr-2 size-4" />
-            <span v-else class="mr-2 size-4 animate-spin">⏳</span>
+            <span v-if="isImporting" class="mr-2 size-4 animate-spin">⏳</span>
             Importar y reemplazar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Clear Data Dialog -->
+    <Dialog v-model:open="showClearDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle class="text-destructive flex items-center gap-2">
+            <Trash2 class="size-5" />
+            Borrar todos los datos
+          </DialogTitle>
+          <DialogDescription class="space-y-4">
+            <p class="font-medium text-red-600 dark:text-red-400">
+              Esta acción es permanente y no se puede deshacer
+            </p>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-2">
+          <div class="space-y-2">
+            <label class="text-sm font-medium">Modo de borrado</label>
+            <Select v-model="clearMode">
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona el modo de borrado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all"> Todo </SelectItem>
+                <SelectItem value="keep-products">
+                  Conservar productos
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p
+              v-if="clearMode === 'keep-products'"
+              class="text-muted-foreground text-xs"
+            >
+              Se creará un día vacío con los productos del último día
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium">
+              Escribe
+              <span class="bg-destructive/50 rounded p-1 font-mono font-bold"
+                >borrar</span
+              >
+              para confirmar
+            </label>
+            <Input
+              v-model="clearConfirmText"
+              placeholder="Escribe 'borrar' aqui"
+              :disabled="isClearing"
+            />
+          </div>
+
+          <p v-if="clearError" class="text-destructive text-sm">
+            {{ clearError }}
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            @click="showClearDialog = false"
+            :disabled="isClearing"
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            @click="handleClearData"
+            :disabled="clearConfirmText !== 'borrar' || isClearing"
+          >
+            <span v-if="isClearing" class="mr-2 size-4 animate-spin">⏳</span>
+            {{
+              clearMode === 'all'
+                ? 'Borrar todo'
+                : 'Borrar y conservar productos'
+            }}
           </Button>
         </DialogFooter>
       </DialogContent>

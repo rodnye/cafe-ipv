@@ -2,9 +2,9 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { IDay, IDayId } from '@/types';
 
-const STORAGE_PREFIX = 'v2.cafeteria-day-';
-const DAYS_LIST_KEY = 'v2.cafeteria-days-indexes';
-const CURRENT_DAY_KEY = 'v2.cafeteria-current-day';
+export const STORAGE_PREFIX = 'v2.cafeteria-day-';
+export const DAYS_LIST_KEY = 'v2.cafeteria-days-indexes';
+export const CURRENT_DAY_KEY = 'v2.cafeteria-current-day';
 
 let loaded = false;
 
