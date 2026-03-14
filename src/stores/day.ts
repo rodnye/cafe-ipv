@@ -4,6 +4,7 @@ import type { IDay, IDayId } from '@/types';
 
 const STORAGE_PREFIX = 'v2.cafeteria-day-';
 const DAYS_LIST_KEY = 'v2.cafeteria-days-indexes';
+let loaded = false;
 
 export const useDayStore = defineStore('days', () => {
   const daysList = ref<IDayId[]>([]);
@@ -42,8 +43,17 @@ export const useDayStore = defineStore('days', () => {
     }
     if (!daysList.value.includes(day.id)) {
       daysList.value = [...daysList.value, day.id];
-      await saveDaysList();
+      await sortDaysList();
     }
+  };
+
+  const sortDaysList = async () => {
+    daysList.value.sort((a, b) => {
+      const dateA = a.replace('day-', '');
+      const dateB = b.replace('day-', '');
+      return dateB.localeCompare(dateA);
+    });
+    await saveDaysList();
   };
 
   const createDay = async (
@@ -78,10 +88,15 @@ export const useDayStore = defineStore('days', () => {
     };
 
     await saveDay(newDay);
+
+    await sortDaysList();
+
     return newDay;
   };
 
   const init = async () => {
+    if (loaded) return;
+
     isLoading.value = true;
     const stored = localStorage.getItem(DAYS_LIST_KEY);
     daysList.value = stored ? JSON.parse(stored) : [];
@@ -94,6 +109,7 @@ export const useDayStore = defineStore('days', () => {
       await setCurrentDay(daysList.value[0]!);
     }
     isLoading.value = false;
+    loaded = true;
   };
 
   return {

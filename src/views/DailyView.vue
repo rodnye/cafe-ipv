@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, ref } from 'vue';
+  import { computed, ref, watch } from 'vue';
   import { useDayStore } from '@/stores/day';
   import { Button } from '@/components/ui/button';
   import {
@@ -12,10 +12,30 @@
   import DayTable from '@/components/DayTable.vue';
   import { CalendarPlus } from 'lucide-vue-next';
   import { useTableStore } from '@/stores/table';
+  import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+  } from '@/components/ui/dialog';
+  import { Input } from '@/components/ui/input';
+  import type { IDayId } from '@/types';
 
   const dayStore = useDayStore();
   const tableStore = useTableStore();
-  const selectedDayId = ref(dayStore.currentDayId);
+
+  // Dialog state
+  const showDateDialog = ref(false);
+  const selectedDate = ref(new Date().toISOString().split('T')[0]);
+  const dateError = ref('');
+
+  const selectDedDay = ref(dayStore.currentDayId);
+  console.log(selectDedDay.value);
+  watch(selectDedDay, async (s) => {
+    console.log('watched' + s);
+    await dayStore.setCurrentDay(s);
+  });
 
   const daysOptions = computed(() => {
     return dayStore.daysList.map((dayId) => ({
@@ -24,9 +44,40 @@
     }));
   });
 
+  const existingDates = computed(() => {
+    return new Set(
+      dayStore.daysList.map((dayId) => dayId.replace(/^day\-/, ''))
+    );
+  });
+
+  const openDateDialog = () => {
+    selectedDate.value = new Date().toISOString().split('T')[0];
+    dateError.value = '';
+    showDateDialog.value = true;
+  };
+
+  const validateDate = (date: string) => {
+    if (existingDates.value.has(date)) {
+      dateError.value = 'Ya existe un día con esta fecha';
+      return false;
+    }
+    dateError.value = '';
+    return true;
+  };
+
+  const handleDateChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    selectedDate.value = input.value;
+    validateDate(input.value);
+  };
+
   const createNewDay = async () => {
-    await dayStore.createDay(new Date(), selectedDayId.value);
-    selectedDayId.value = dayStore.currentDayId;
+    if (!validateDate(selectedDate.value!)) return;
+
+    const date = new Date(selectedDate.value!);
+    await dayStore.createDay(date, dayStore.currentDayId);
+    dayStore.currentDayId = dayStore.currentDayId;
+    showDateDialog.value = false;
   };
 </script>
 
@@ -39,7 +90,7 @@
         Tabla Diaria IPV
       </h2>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <Select v-model="selectedDayId">
+        <Select v-model="selectDedDay">
           <SelectTrigger class="w-full sm:w-45">
             <SelectValue placeholder="Seleccionar día" />
           </SelectTrigger>
@@ -53,13 +104,41 @@
             </SelectItem>
           </SelectContent>
         </Select>
-        <Button @click="createNewDay" class="gap-2">
+        <Button @click="openDateDialog" class="gap-2">
           <CalendarPlus class="size-4" />
           <span class="hidden sm:inline">Nuevo día</span>
           <span class="sm:hidden">Nuevo</span>
         </Button>
       </div>
     </div>
+
+    <!-- Date selection dialog -->
+    <Dialog v-model:open="showDateDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Seleccionar fecha</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4 py-4">
+          <Input
+            :value="selectedDate"
+            type="date"
+            class="w-full"
+            @input="handleDateChange"
+          />
+          <p v-if="dateError" class="text-destructive text-sm">
+            {{ dateError }}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showDateDialog = false">
+            Cancelar
+          </Button>
+          <Button @click="createNewDay" :disabled="!!dateError">
+            Crear día
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <div v-if="dayStore.currentDay">
       <DayTable :day="dayStore.currentDay" @update="tableStore.updateField" />
