@@ -1,10 +1,9 @@
 <script setup lang="ts">
-  import type { Product } from '@/types';
   import { Card, CardContent, CardFooter } from '@/components/ui/card';
   import { Button } from '@/components/ui/button';
   import { ShoppingBag } from 'lucide-vue-next';
 
-  defineProps<{ product: Product }>();
+  defineProps<{ product: { name: string; price: number } }>();
   defineEmits<{ (e: 'addToCart'): void }>();
 </script>
 
