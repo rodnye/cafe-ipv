@@ -4,6 +4,8 @@ import type { IDay, IDayId } from '@/types';
 
 const STORAGE_PREFIX = 'v2.cafeteria-day-';
 const DAYS_LIST_KEY = 'v2.cafeteria-days-indexes';
+const CURRENT_DAY_KEY = 'v2.cafeteria-current-day';
+
 let loaded = false;
 
 export const useDayStore = defineStore('days', () => {
@@ -21,6 +23,9 @@ export const useDayStore = defineStore('days', () => {
 
     currentDay.value = day;
     currentDayId.value = dayId;
+
+    // Persistir el día actual
+    localStorage.setItem(CURRENT_DAY_KEY, dayId);
   };
 
   const saveDaysList = async () => {
@@ -106,7 +111,15 @@ export const useDayStore = defineStore('days', () => {
       await setCurrentDay(newDay.id);
       await saveDaysList();
     } else {
-      await setCurrentDay(daysList.value[0]!);
+      const savedCurrentDayId = localStorage.getItem(
+        CURRENT_DAY_KEY
+      ) as IDayId | null;
+
+      if (savedCurrentDayId && daysList.value.includes(savedCurrentDayId)) {
+        await setCurrentDay(savedCurrentDayId);
+      } else {
+        await setCurrentDay(daysList.value[0]!);
+      }
     }
     isLoading.value = false;
     loaded = true;
