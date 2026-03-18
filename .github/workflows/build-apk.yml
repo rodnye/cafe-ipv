@@ -48,13 +48,15 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Decode Keystore
+        id: keystore
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ./keystore.jks
+          echo "KEYSTORE_PATH=$(realpath ./keystore.jks)" >> $GITHUB_OUTPUT
 
       - name: Build Release APK
         run: pnpm android:release
         env:
-          ANDROID_KEYSTORE_PATH: ./keystore.jks
+          ANDROID_KEYSTORE_PATH: ${{ steps.keystore.outputs.KEYSTORE_PATH }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
