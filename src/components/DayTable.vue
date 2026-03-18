@@ -1,5 +1,10 @@
 <script setup lang="ts">
-  import type { IDay, IDayId, IProductId } from '@/types';
+  import type {
+    IDay,
+    IDayId,
+    IMutableProductDailyField,
+    IProductId,
+  } from '@/types';
   import {
     Table,
     TableBody,
@@ -16,14 +21,14 @@
       e: 'update',
       dayId: IDayId,
       productId: IProductId,
-      field: 'inicio' | 'entrada' | 'salida' | 'price',
+      field: IMutableProductDailyField | 'price',
       value: number
     ): void;
   }>();
 
   const updateField = (
     productId: IProductId,
-    field: 'inicio' | 'entrada' | 'salida' | 'price',
+    field: IMutableProductDailyField | 'price',
     event: Event
   ) => {
     const input = event.target as HTMLInputElement;
@@ -60,7 +65,7 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.inicio"
+              :value="entry.daily.inicio"
               @input="(e: Event) => updateField(entry.id, 'inicio', e)"
               class="h-8 w-16 md:w-20"
               min="0"
@@ -69,7 +74,7 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.entrada"
+              :value="entry.daily.entrada"
               @input="(e: Event) => updateField(entry.id, 'entrada', e)"
               class="h-8 w-16 md:w-20"
               min="0"
@@ -78,13 +83,13 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.salida"
+              :value="entry.daily.salida"
               @input="(e: Event) => updateField(entry.id, 'salida', e)"
               class="h-8 w-16 md:w-20"
               min="0"
             />
           </TableCell>
-          <TableCell class="font-mono">{{ entry.total }}</TableCell>
+          <TableCell class="font-mono">{{ entry.daily.total }}</TableCell>
           <TableCell>
             <Input
               type="number"
@@ -94,11 +99,11 @@
               min="0"
             />
           </TableCell>
-          <TableCell class="font-mono">{{ entry.vendido }}</TableCell>
+          <TableCell class="font-mono">{{ entry.daily.vendido }}</TableCell>
           <TableCell class="font-mono font-medium"
-            >{{ entry.importe }} CUP</TableCell
+            >{{ entry.daily.importe }} CUP</TableCell
           >
-          <TableCell class="font-mono">{{ entry.final }}</TableCell>
+          <TableCell class="font-mono">{{ entry.daily.final }}</TableCell>
         </TableRow>
       </TableBody>
     </Table>

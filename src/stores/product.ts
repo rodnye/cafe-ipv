@@ -1,5 +1,3 @@
-// src/stores/product.ts
-
 import { defineStore } from 'pinia';
 import { useDayStore } from './day';
 import type { IDayId, IProduct, IProductId } from '@/types';
@@ -21,14 +19,16 @@ export const useProductStore = defineStore('products', () => {
     const newProduct: IProduct = {
       id: crypto.randomUUID() as IProductId,
       name: name,
-      inicio: 0,
-      entrada: 0,
-      salida: 0,
-      total: 0,
       price: price,
-      vendido: 0,
-      importe: 0,
-      final: 0,
+      daily: {
+        inicio: 0,
+        entrada: 0,
+        salida: 0,
+        total: 0,
+        vendido: 0,
+        importe: 0,
+        final: 0,
+      },
     };
 
     day.products.splice(0, 0, newProduct);
@@ -59,7 +59,7 @@ export const useProductStore = defineStore('products', () => {
           'No es posible actualizar el precio de este producto. Ya hay pedidos asociados a él. Por favor, cree un nuevo producto con un nombre similar'
         );
       product.price = updates.price;
-      product.importe = product.vendido * product.price;
+      product.daily.importe = product.daily.vendido * product.price;
     }
 
     day.updatedAt = Date.now();

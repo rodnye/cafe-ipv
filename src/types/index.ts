@@ -1,9 +1,11 @@
 export type IProductId = string & { readonly __brand: unique symbol };
-export interface IProduct {
-  id: IProductId;
-  name: string;
-  price: number;
 
+export type IMutableProductDailyField = keyof Pick<
+  IProductDailyData,
+  'inicio' | 'entrada' | 'salida'
+>;
+
+export interface IProductDailyData {
   inicio: number;
   entrada: number;
   salida: number;
@@ -11,6 +13,13 @@ export interface IProduct {
   vendido: number;
   importe: number;
   final: number;
+}
+
+export interface IProduct {
+  id: IProductId;
+  name: string;
+  price: number;
+  daily: IProductDailyData;
 }
 
 export interface IOrderItem {

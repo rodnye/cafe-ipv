@@ -20,7 +20,6 @@
     DialogTitle,
   } from '@/components/ui/dialog';
   import { Input } from '@/components/ui/input';
-  import type { IDayId } from '@/types';
 
   const dayStore = useDayStore();
   const tableStore = useTableStore();

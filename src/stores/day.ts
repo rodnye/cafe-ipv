@@ -2,9 +2,10 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { IDay, IDayId } from '@/types';
 
-export const STORAGE_PREFIX = 'v2.cafeteria-day-';
-export const DAYS_LIST_KEY = 'v2.cafeteria-days-indexes';
-export const CURRENT_DAY_KEY = 'v2.cafeteria-current-day';
+export const STORAGE_PREFIX = 'v3:cafeteria-';
+export const DAY_PREFIX = STORAGE_PREFIX + 'day-';
+export const DAYS_LIST_KEY = STORAGE_PREFIX + 'days-indexes';
+export const CURRENT_DAY_KEY = STORAGE_PREFIX + 'current-day';
 
 let loaded = false;
 
@@ -33,13 +34,13 @@ export const useDayStore = defineStore('days', () => {
   };
 
   const loadDay = async (dayId: IDayId) => {
-    const key = STORAGE_PREFIX + dayId;
+    const key = DAY_PREFIX + dayId;
     const stored = localStorage.getItem(key);
     return stored ? (JSON.parse(stored) as IDay) : null;
   };
 
   const saveDay = async (day: IDay) => {
-    const key = STORAGE_PREFIX + day.id;
+    const key = DAY_PREFIX + day.id;
     localStorage.setItem(key, JSON.stringify(day));
 
     // force update
@@ -72,14 +73,16 @@ export const useDayStore = defineStore('days', () => {
       products = prevDay.products.map((p) => ({
         id: p.id,
         name: p.name,
-        inicio: p.final,
-        entrada: 0,
-        salida: 0,
-        total: p.final,
         price: p.price,
-        vendido: 0,
-        importe: 0,
-        final: p.final,
+        daily: {
+          inicio: p.daily.final,
+          entrada: 0,
+          salida: 0,
+          total: p.daily.final,
+          vendido: 0,
+          importe: 0,
+          final: p.daily.final,
+        },
       }));
     }
 

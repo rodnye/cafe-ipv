@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { useDayStore } from './day';
-import type { IDayId, IProduct } from '@/types';
+import type { IDayId, IMutableProductDailyField } from '@/types';
 import { useProductStore } from './product';
 
 export const useTableStore = defineStore('table', () => {
@@ -11,9 +11,10 @@ export const useTableStore = defineStore('table', () => {
     const day = await dayStore.getDay(dayId);
 
     for (const product of day.products) {
-      product.total = product.inicio + product.entrada - product.salida;
-      product.final = product.total - product.vendido;
-      product.importe = product.vendido * product.price;
+      product.daily.total =
+        product.daily.inicio + product.daily.entrada - product.daily.salida;
+      product.daily.final = product.daily.total - product.daily.vendido;
+      product.daily.importe = product.daily.vendido * product.price;
     }
 
     day.updatedAt = Date.now();
@@ -24,8 +25,8 @@ export const useTableStore = defineStore('table', () => {
     const day = await dayStore.getDay(dayId);
 
     day.products.forEach((p) => {
-      p.vendido = 0;
-      p.importe = 0;
+      p.daily.vendido = 0;
+      p.daily.importe = 0;
     });
 
     const quantities = new Map<string, number>();
@@ -38,10 +39,11 @@ export const useTableStore = defineStore('table', () => {
 
     day.products.forEach((product) => {
       const qty = quantities.get(product.id) || 0;
-      product.vendido = qty;
-      product.importe = qty * product.price;
-      product.total = product.inicio + product.entrada - product.salida;
-      product.final = product.total - product.vendido;
+      product.daily.vendido = qty;
+      product.daily.importe = qty * product.price;
+      product.daily.total =
+        product.daily.inicio + product.daily.entrada - product.daily.salida;
+      product.daily.final = product.daily.total - product.daily.vendido;
     });
 
     day.updatedAt = Date.now();
@@ -51,7 +53,7 @@ export const useTableStore = defineStore('table', () => {
   const updateField = async (
     dayId: IDayId,
     productId: string,
-    field: keyof Pick<IProduct, 'inicio' | 'entrada' | 'salida' | 'price'>,
+    field: IMutableProductDailyField | 'price',
     value: number
   ) => {
     const day = await dayStore.getDay(dayId);
@@ -61,10 +63,13 @@ export const useTableStore = defineStore('table', () => {
 
     if (field === 'price') {
       await productStore.updateProduct(dayId, productId, { price: value });
-    } else product[field] = value;
+    } else {
+      product.daily[field] = value;
+    }
 
-    product.total = product.inicio + product.entrada - product.salida;
-    product.final = product.total - product.vendido;
+    product.daily.total =
+      product.daily.inicio + product.daily.entrada - product.daily.salida;
+    product.daily.final = product.daily.total - product.daily.vendido;
 
     day.updatedAt = Date.now();
     await dayStore.saveDay(day);

@@ -29,6 +29,7 @@
   import {
     CURRENT_DAY_KEY,
     DAYS_LIST_KEY,
+    DAY_PREFIX,
     STORAGE_PREFIX,
     useDayStore,
   } from '@/stores/day';
@@ -61,7 +62,7 @@
     const cafeData: Record<string, string> = {};
 
     keys.forEach((key) => {
-      if (key.startsWith('v2.cafeteria-')) {
+      if (key.startsWith(STORAGE_PREFIX)) {
         cafeData[key] = localStorage.getItem(key) || '';
       }
     });
@@ -108,7 +109,7 @@
       const importedData = JSON.parse(text);
 
       const hasCafeData = Object.keys(importedData).some((key) =>
-        key.startsWith('v2.cafeteria-')
+        key.startsWith(STORAGE_PREFIX)
       );
 
       if (!hasCafeData) {
@@ -117,7 +118,7 @@
 
       const keys = Object.keys(localStorage);
       keys.forEach((key) => {
-        if (key.startsWith('v2.cafeteria-')) {
+        if (key.startsWith(STORAGE_PREFIX)) {
           localStorage.removeItem(key);
         }
       });
@@ -152,7 +153,7 @@
       clearError.value = '';
 
       const keys = Object.keys(localStorage);
-      const cafeKeys = keys.filter((key) => key.startsWith('v2.cafeteria-'));
+      const cafeKeys = keys.filter((key) => key.startsWith(STORAGE_PREFIX));
 
       if (clearMode.value === 'all') {
         // Delete everything
@@ -168,7 +169,7 @@
 
         cafeKeys.forEach((key) => {
           if (
-            key !== `${STORAGE_PREFIX}${lastDayId}` &&
+            key !== `${DAY_PREFIX}${lastDayId}` &&
             key !== DAYS_LIST_KEY &&
             key !== CURRENT_DAY_KEY
           ) {
@@ -183,7 +184,7 @@
             lastDay.orders = [];
             lastDay.updatedAt = Date.now();
 
-            const key = STORAGE_PREFIX + lastDay.id;
+            const key = DAY_PREFIX + lastDay.id;
             localStorage.setItem(key, JSON.stringify(lastDay));
           }
         }
