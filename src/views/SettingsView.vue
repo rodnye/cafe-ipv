@@ -143,7 +143,7 @@
   };
 
   const handleClearData = async () => {
-    if (clearConfirmText.value !== 'borrar') {
+    if (clearConfirmText.value.toLowerCase().trim() !== 'borrar') {
       clearError.value = 'Escribe "borrar" para confirmar';
       return;
     }
@@ -366,7 +366,11 @@
           <Button
             variant="destructive"
             @click="handleImport"
-            :disabled="confirmText !== 'borrar' || !importFile || isImporting"
+            :disabled="
+              confirmText.toLowerCase().trim() !== 'borrar' ||
+              !importFile ||
+              isImporting
+            "
           >
             <span v-if="isImporting" class="mr-2 size-4 animate-spin">⏳</span>
             Importar y reemplazar
@@ -443,7 +447,9 @@
           <Button
             variant="destructive"
             @click="handleClearData"
-            :disabled="clearConfirmText !== 'borrar' || isClearing"
+            :disabled="
+              clearConfirmText.toLowerCase().trim() !== 'borrar' || isClearing
+            "
           >
             <span v-if="isClearing" class="mr-2 size-4 animate-spin">⏳</span>
             {{

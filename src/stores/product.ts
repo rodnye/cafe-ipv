@@ -49,7 +49,7 @@ export const useProductStore = defineStore('products', () => {
     if (updates.name) {
       product.name = updates.name;
     }
-    if (updates.price) {
+    if (updates.price && updates.price !== product.price) {
       const hasOrders = day.orders.some((order) =>
         order.items.some((item) => item.productId === productId)
       );

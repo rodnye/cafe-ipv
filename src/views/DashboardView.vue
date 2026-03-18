@@ -160,7 +160,7 @@
         <div class="bg-background sticky top-0 z-10 pt-4 pb-2">
           <h2 class="mb-2 text-lg font-semibold">Productos</h2>
           <Input
-            v-model="searchQuery"
+            :model-value="searchQuery"
             placeholder="Buscar productos..."
             class="w-full"
           />
@@ -284,7 +284,7 @@
         <div class="flex h-full flex-col">
           <div class="border-b p-4">
             <Input
-              v-model="searchQuery"
+              :model-value="searchQuery"
               placeholder="Buscar productos..."
               class="w-full"
             />

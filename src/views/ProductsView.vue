@@ -169,11 +169,7 @@
           </div>
           <div class="space-y-2">
             <label class="text-sm font-medium">Precio (CUP)</label>
-            <Input
-              v-model.number="editingProduct.price"
-              type="number"
-              min="0"
-            />
+            <Input v-model="editingProduct.price" type="number" min="0" />
           </div>
         </div>
         <DialogFooter>

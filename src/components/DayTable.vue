@@ -65,7 +65,7 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.daily.inicio"
+              v-model="entry.daily.inicio"
               @input="(e: Event) => updateField(entry.id, 'inicio', e)"
               class="h-8 w-16 md:w-20"
               min="0"
@@ -74,7 +74,7 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.daily.entrada"
+              v-model="entry.daily.entrada"
               @input="(e: Event) => updateField(entry.id, 'entrada', e)"
               class="h-8 w-16 md:w-20"
               min="0"
@@ -83,7 +83,7 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.daily.salida"
+              v-model="entry.daily.salida"
               @input="(e: Event) => updateField(entry.id, 'salida', e)"
               class="h-8 w-16 md:w-20"
               min="0"
@@ -93,7 +93,7 @@
           <TableCell>
             <Input
               type="number"
-              :value="entry.price"
+              v-model="entry.price"
               @input="(e: Event) => updateField(entry.id, 'price', e)"
               class="h-8 w-16 md:w-20"
               min="0"
