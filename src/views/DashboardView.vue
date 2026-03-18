@@ -154,7 +154,7 @@
   <div v-if="dayStore.isLoading">Cargando</div>
   <div v-else class="flex h-full flex-col">
     <!-- Desktop Layout -->
-    <div class="hidden lg:grid lg:h-full lg:grid-cols-3 lg:gap-6">
+    <div class="hidden md:grid md:h-full md:grid-cols-3 md:gap-6">
       <!-- Left column - Products -->
       <div class="col-span-2 overflow-y-auto pr-2">
         <div class="bg-background sticky top-0 z-10 pt-4 pb-2">
@@ -230,7 +230,7 @@
     </div>
 
     <!-- Mobile Layout -->
-    <div class="flex h-full flex-col lg:hidden">
+    <div class="flex h-full flex-col md:hidden">
       <!-- Current order summary -->
       <div class="bg-background sticky top-0 z-10 border-b p-3">
         <div class="flex items-center justify-between">
