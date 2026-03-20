@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "sync-version": "tsx ./scripts/sync-version.ts",
     "android:sync": "tsx ./scripts/sync-android.ts ",
     "android:debug": "cd android && ./gradlew assembleDebug",
     "android:release": "cd android && ./gradlew clean assembleRelease",
