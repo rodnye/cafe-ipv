@@ -86,7 +86,9 @@
     <div
       class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
     >
-      <h2 class="text-primary text-xl font-bold md:text-2xl">Productos</h2>
+      <h2 class="text-primary hidden text-2xl font-bold md:inline">
+        Productos
+      </h2>
       <Button @click="openNew" class="gap-2">
         <Plus class="size-4" />
         Nuevo producto

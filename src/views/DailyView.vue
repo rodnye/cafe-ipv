@@ -215,7 +215,7 @@
     <div
       class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
     >
-      <h2 class="text-primary text-xl font-bold md:text-2xl">
+      <h2 class="text-primary hidden text-2xl font-bold md:inline">
         Tabla Diaria IPV
       </h2>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">

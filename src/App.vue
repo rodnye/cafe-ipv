@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { useAuthStore } from '@/stores/auth';
-  import { useRouter } from 'vue-router';
+  import { useRouter, useRoute } from 'vue-router';
   import { Button } from '@/components/ui/button';
   import {
     Menu,
@@ -22,6 +22,7 @@
   const auth = useAuthStore();
   const theme = useThemeStore();
   const router = useRouter();
+  const route = useRoute();
   const mobileMenuOpen = ref(false);
 
   const logout = () => {
@@ -54,7 +55,15 @@
       <div
         class="container mx-auto flex items-center justify-between p-3 md:p-4"
       >
-        <h1 class="text-primary text-lg font-bold md:text-xl">Cafetería IPV</h1>
+        <!-- Desktop: App name -->
+        <h1 class="text-primary hidden text-lg font-bold md:block md:text-xl">
+          Cafetería IPV
+        </h1>
+
+        <!-- Mobile: Current section name -->
+        <h1 class="text-primary block text-xl font-bold md:hidden">
+          {{ route.name }}
+        </h1>
 
         <div class="flex items-center gap-2">
           <!-- Desktop navigation -->

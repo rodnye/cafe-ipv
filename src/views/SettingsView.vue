@@ -208,7 +208,7 @@
 <template>
   <div class="space-y-6">
     <div class="flex flex-col justify-between md:flex-row">
-      <h2 class="text-primary mb-6 text-xl font-bold md:mb-0 md:text-2xl">
+      <h2 class="text-primary hidden text-2xl font-bold md:inline">
         Configuración
       </h2>
       <ThemeSelector />
