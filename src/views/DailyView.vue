@@ -10,7 +10,13 @@
     SelectValue,
   } from '@/components/ui/select';
   import DayTable from '@/components/DayTable.vue';
-  import { CalendarPlus, Settings, Pencil, Trash2 } from 'lucide-vue-next';
+  import {
+    CalendarPlus,
+    Settings,
+    Pencil,
+    Trash2,
+    Calculator,
+  } from 'lucide-vue-next';
   import { useTableStore } from '@/stores/table';
   import {
     Dialog,
@@ -33,6 +39,13 @@
 
   const dayStore = useDayStore();
   const tableStore = useTableStore();
+
+  const dailyTotal = computed(() => {
+    if (!dayStore.currentDay) return 0;
+    return dayStore.currentDay.products.reduce((sum, product) => {
+      return sum + (product.daily.importe || 0);
+    }, 0);
+  });
 
   // Dialog state for new day
   const showDateDialog = ref(false);
@@ -149,7 +162,7 @@
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="flex flex-col space-y-4">
     <div
       class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
     >
@@ -182,11 +195,24 @@
           class="gap-2"
         >
           <Settings class="size-4" />
-          <span class="hidden sm:inline">Gestionar días</span>
-          <span class="sm:hidden">Días</span>
+          <span class="inline">Gestionar días</span>
         </Button>
       </div>
     </div>
+
+    <Card class="border-primary/20 bg-primary/5 self-end shadow-sm">
+      <CardContent class="">
+        <div class="flex items-center justify-between">
+          <div class="mr-3 flex items-center gap-2">
+            <Calculator class="text-primary size-4" />
+            <span class="text-xs font-medium sm:text-sm">Total del día: </span>
+          </div>
+          <span class="text-primary text-lg font-bold sm:text-xl"
+            >{{ dailyTotal }} CUP</span
+          >
+        </div>
+      </CardContent>
+    </Card>
 
     <!-- Create day dialog -->
     <Dialog v-model:open="showDateDialog">
