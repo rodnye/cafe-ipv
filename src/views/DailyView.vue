@@ -16,6 +16,7 @@
     Pencil,
     Trash2,
     Calculator,
+    FileSpreadsheet,
   } from 'lucide-vue-next';
   import { useTableStore } from '@/stores/table';
   import {
@@ -36,6 +37,7 @@
     TableRow,
   } from '@/components/ui/table';
   import type { IDayId } from '@/types';
+  import * as xlsx from 'xlsx';
 
   const dayStore = useDayStore();
   const tableStore = useTableStore();
@@ -158,6 +160,53 @@
     )
       return;
     await dayStore.deleteDay(dayId);
+  };
+
+  // Export to Excel $$$$
+  const exportToExcel = () => {
+    const book = xlsx.utils.book_new();
+
+    const excelData = dayStore.currentDay.products.map((product) => ({
+      Producto: product.name,
+      Inicio: product.daily.inicio as number | string,
+      Entrada: product.daily.entrada as number | string,
+      Salida: product.daily.salida as number | string,
+      Total: product.daily.total as number | string,
+      'Precio (CUP)': product.price as number | string,
+      Vendido: product.daily.vendido as number | string,
+      'Importe (CUP)': product.daily.importe,
+      Final: product.daily.final as number | string,
+    }));
+
+    // total row
+    excelData.push({
+      Producto: 'TOTAL DEL DÍA',
+      Inicio: '',
+      Entrada: '',
+      Salida: '',
+      Total: '',
+      'Precio (CUP)': '',
+      Vendido: '',
+      'Importe (CUP)': dailyTotal.value,
+      Final: '',
+    });
+
+    const sheet = xlsx.utils.json_to_sheet(excelData);
+    sheet['!cols'] = [
+      { wch: 30 }, // Producto
+      { wch: 10 }, // Inicio
+      { wch: 10 }, // Entrada
+      { wch: 10 }, // Salida
+      { wch: 10 }, // Total
+      { wch: 12 }, // Precio
+      { wch: 10 }, // Vendido
+      { wch: 15 }, // Importe
+      { wch: 10 }, // Final
+    ];
+    xlsx.utils.book_append_sheet(book, sheet, 'Tabla Diaria');
+
+    // Save file
+    xlsx.writeFile(book, `cafeteria-${dayStore.currentDay.date}.xlsx`);
   };
 </script>
 
@@ -324,6 +373,18 @@
     <!-- Day table -->
     <div v-if="dayStore.currentDay">
       <DayTable :day="dayStore.currentDay" @update="tableStore.updateField" />
+
+      <!-- Export -->
+      <div class="mt-4 flex justify-end">
+        <Button
+          @click="exportToExcel"
+          size="sm"
+          class="gap-2 bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+        >
+          <FileSpreadsheet class="size-4" />
+          Exportar a Excel
+        </Button>
+      </div>
     </div>
     <div
       v-else
