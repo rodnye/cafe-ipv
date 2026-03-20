@@ -10,7 +10,7 @@
     SelectValue,
   } from '@/components/ui/select';
   import DayTable from '@/components/DayTable.vue';
-  import { CalendarPlus } from 'lucide-vue-next';
+  import { CalendarPlus, Settings, Pencil, Trash2 } from 'lucide-vue-next';
   import { useTableStore } from '@/stores/table';
   import {
     Dialog,
@@ -18,22 +18,31 @@
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
   } from '@/components/ui/dialog';
   import { Input } from '@/components/ui/input';
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '@/components/ui/table';
+  import type { IDayId } from '@/types';
 
   const dayStore = useDayStore();
   const tableStore = useTableStore();
 
-  // Dialog state
+  // Dialog state for new day
   const showDateDialog = ref(false);
   const selectedDate = ref(new Date().toISOString().split('T')[0]);
   const dateError = ref('');
 
+  // Day selector
   const selectDedDay = ref(dayStore.currentDayId);
-  console.log(selectDedDay.value);
-  watch(selectDedDay, async (s) => {
-    console.log('watched' + s);
-    await dayStore.setCurrentDay(s);
+  watch(selectDedDay, async (newId) => {
+    if (newId) await dayStore.setCurrentDay(newId);
   });
 
   const daysOptions = computed(() => {
@@ -49,6 +58,7 @@
     );
   });
 
+  // New day dialog
   const openDateDialog = () => {
     selectedDate.value = new Date().toISOString().split('T')[0];
     dateError.value = '';
@@ -75,8 +85,66 @@
 
     const date = new Date(selectedDate.value!);
     await dayStore.createDay(date, dayStore.currentDayId);
-    dayStore.currentDayId = dayStore.currentDayId;
     showDateDialog.value = false;
+  };
+
+  // Day management dialog
+  const showManagementDialog = ref(false);
+  const showEditDateDialog = ref(false);
+  const editingDayId = ref<IDayId | null>(null);
+  const editDateValue = ref('');
+  const editDateError = ref('');
+
+  const openEditDateDialog = (dayId: IDayId) => {
+    editingDayId.value = dayId;
+    editDateValue.value = dayId.replace('day-', '');
+    editDateError.value = '';
+    showEditDateDialog.value = true;
+  };
+
+  const handleEditDateChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    editDateValue.value = input.value;
+    validateEditDate();
+  };
+
+  const validateEditDate = () => {
+    if (!editingDayId.value) return false;
+    const newDate = editDateValue.value;
+    if (!newDate) {
+      editDateError.value = 'Selecciona una fecha';
+      return false;
+    }
+
+    const existing = dayStore.daysList.find(
+      (id) => id === `day-${newDate}` && id !== editingDayId.value
+    );
+    if (existing) {
+      editDateError.value = 'Ya existe un día con esta fecha';
+      return false;
+    }
+    editDateError.value = '';
+    return true;
+  };
+
+  const saveEditDate = async () => {
+    if (!validateEditDate() || !editingDayId.value) return;
+    try {
+      await dayStore.updateDayDate(editingDayId.value, editDateValue.value);
+      showEditDateDialog.value = false;
+    } catch (error) {
+      editDateError.value = (error as Error).message;
+    }
+  };
+
+  const confirmDeleteDay = async (dayId: IDayId) => {
+    if (
+      !confirm(
+        `¿Estás seguro de eliminar el día ${dayId.replace('day-', '')}? Esta acción no se puede deshacer.`
+      )
+    )
+      return;
+    await dayStore.deleteDay(dayId);
   };
 </script>
 
@@ -108,10 +176,19 @@
           <span class="hidden sm:inline">Nuevo día</span>
           <span class="sm:hidden">Nuevo</span>
         </Button>
+        <Button
+          @click="showManagementDialog = true"
+          variant="outline"
+          class="gap-2"
+        >
+          <Settings class="size-4" />
+          <span class="hidden sm:inline">Gestionar días</span>
+          <span class="sm:hidden">Días</span>
+        </Button>
       </div>
     </div>
 
-    <!-- Date selection dialog -->
+    <!-- Create day dialog -->
     <Dialog v-model:open="showDateDialog">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
@@ -139,6 +216,86 @@
       </DialogContent>
     </Dialog>
 
+    <!-- Day management dialog -->
+    <Dialog v-model:open="showManagementDialog">
+      <DialogContent class="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Gestionar días</DialogTitle>
+          <DialogDescription>
+            Aquí puedes editar o eliminar días existentes. Ten cuidado, los
+            cambios son permanentes.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="max-h-96 overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha</TableHead>
+                <TableHead class="w-32">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-for="dayId in dayStore.daysList" :key="dayId">
+                <TableCell>{{ dayId.replace('day-', '') }}</TableCell>
+                <TableCell>
+                  <div class="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      @click="openEditDateDialog(dayId)"
+                    >
+                      <Pencil class="size-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon-sm"
+                      @click="confirmDeleteDay(dayId)"
+                    >
+                      <Trash2 class="size-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showManagementDialog = false">
+            Cerrar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Edit date dialog -->
+    <Dialog v-model:open="showEditDateDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar fecha del día</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4 py-4">
+          <Input
+            :value="editDateValue"
+            type="date"
+            class="w-full"
+            @input="handleEditDateChange"
+          />
+          <p v-if="editDateError" class="text-destructive text-sm">
+            {{ editDateError }}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showEditDateDialog = false">
+            Cancelar
+          </Button>
+          <Button @click="saveEditDate" :disabled="!!editDateError">
+            Guardar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Day table -->
     <div v-if="dayStore.currentDay">
       <DayTable :day="dayStore.currentDay" @update="tableStore.updateField" />
     </div>

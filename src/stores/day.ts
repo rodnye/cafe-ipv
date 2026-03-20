@@ -53,6 +53,57 @@ export const useDayStore = defineStore('days', () => {
     }
   };
 
+  const deleteDay = async (dayId: IDayId) => {
+    const key = DAY_PREFIX + dayId;
+    localStorage.removeItem(key);
+    const index = daysList.value.indexOf(dayId);
+    if (index !== -1) {
+      daysList.value.splice(index, 1);
+      await saveDaysList();
+    }
+    if (currentDayId.value === dayId) {
+      if (daysList.value.length > 0) {
+        await setCurrentDay(daysList.value[0]!);
+      } else {
+        const newDay = await createDay(new Date(), null);
+        await setCurrentDay(newDay.id);
+      }
+    }
+  };
+
+  const updateDayDate = async (oldId: IDayId, newDate: string) => {
+    const newId = `day-${newDate}` as IDayId;
+    if (oldId === newId) return;
+
+    if (daysList.value.includes(newId)) {
+      throw new Error('Ya existe un día con esa fecha');
+    }
+
+    const day = await loadDay(oldId);
+    if (!day) throw new Error('Día no encontrado');
+
+    day.id = newId;
+    day.date = newDate;
+
+    const newKey = DAY_PREFIX + newId;
+    localStorage.setItem(newKey, JSON.stringify(day));
+
+    const oldKey = DAY_PREFIX + oldId;
+    localStorage.removeItem(oldKey);
+
+    const index = daysList.value.indexOf(oldId);
+    if (index !== -1) {
+      daysList.value.splice(index, 1, newId);
+      await sortDaysList();
+    }
+
+    if (currentDayId.value === oldId) {
+      currentDayId.value = newId;
+      currentDay.value = day;
+      localStorage.setItem(CURRENT_DAY_KEY, newId);
+    }
+  };
+
   const sortDaysList = async () => {
     daysList.value.sort((a, b) => {
       const dateA = a.replace('day-', '');
@@ -138,6 +189,9 @@ export const useDayStore = defineStore('days', () => {
     isLoading,
     createDay,
     setCurrentDay,
+
+    updateDayDate,
+    deleteDay,
 
     loadDay,
     saveDay,
