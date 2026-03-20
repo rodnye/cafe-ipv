@@ -10,15 +10,17 @@
     Settings,
     LogOut,
   } from 'lucide-vue-next';
-  import { ref } from 'vue';
+  import { onMounted, ref } from 'vue';
   import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
   } from './components/ui/sheet';
+  import { useThemeStore } from './stores/theme';
 
   const auth = useAuthStore();
+  const theme = useThemeStore();
   const router = useRouter();
   const mobileMenuOpen = ref(false);
 
@@ -30,6 +32,10 @@
   const closeMenu = () => {
     mobileMenuOpen.value = false;
   };
+
+  onMounted(() => {
+    theme.init();
+  });
 
   const navigation = [
     { path: '/', name: 'Inicio', icon: Home },

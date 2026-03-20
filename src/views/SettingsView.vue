@@ -25,6 +25,7 @@
     SelectTrigger,
     SelectValue,
   } from '@/components/ui/select';
+  import ThemeSelector from '@/components/ThemeSelector.vue';
   import { Download, Upload, AlertTriangle, Trash2 } from 'lucide-vue-next';
   import {
     CURRENT_DAY_KEY,
@@ -206,8 +207,12 @@
 
 <template>
   <div class="space-y-6">
-    <h2 class="text-primary text-xl font-bold md:text-2xl">Configuración</h2>
-
+    <div class="flex flex-col justify-between md:flex-row">
+      <h2 class="text-primary mb-6 text-xl font-bold md:mb-0 md:text-2xl">
+        Configuración
+      </h2>
+      <ThemeSelector />
+    </div>
     <div class="grid gap-6 md:grid-cols-2">
       <!-- Export Card -->
       <Card>
