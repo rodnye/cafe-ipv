@@ -1,4 +1,7 @@
-# Café IPV App
+<center>
+  <img src="./public/hero-logo.png">
+  <h1> Café IPV App </h1>
+</center>
 
 [![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=for-the-badge&logo=vue.js)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
