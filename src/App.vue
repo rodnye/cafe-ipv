@@ -18,6 +18,7 @@
     SheetTitle,
   } from './components/ui/sheet';
   import { useThemeStore } from './stores/theme';
+  import DecorationBg from './components/DecorationBg.vue';
 
   const auth = useAuthStore();
   const theme = useThemeStore();
@@ -47,7 +48,9 @@
 </script>
 
 <template>
-  <div class="bg-background flex h-full flex-col">
+  <div class="bg-background relative flex h-full flex-col">
+    <DecorationBg />
+
     <header
       v-if="auth.user"
       class="bg-card/80 sticky top-0 z-10 border-b shadow-sm backdrop-blur-sm"
@@ -149,7 +152,7 @@
     </header>
 
     <main
-      class="container mx-auto flex grow flex-col overflow-y-auto p-3 md:p-4"
+      class="relative z-1 container mx-auto flex grow flex-col overflow-y-auto p-3 md:p-4"
     >
       <router-view />
     </main>

@@ -232,7 +232,7 @@
     <!-- Mobile Layout -->
     <div class="flex h-full flex-col md:hidden">
       <!-- Current order summary -->
-      <div class="bg-background sticky top-0 z-10 border-b p-3">
+      <div class="sticky top-0 z-10 border-b p-3">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="font-semibold">Pedido actual</h2>

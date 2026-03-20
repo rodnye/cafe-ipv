@@ -1,7 +1,35 @@
+@reference '../style.css';
+
+.decor-tulip {
+  @apply relative -bottom-10 -left-30 w-60 object-contain opacity-30;
+  transform-origin: 50% 100%;
+  animation: animation-tulip 50s infinite alternate ease-in-out;
+}
+
+.dark .decor-tulip {
+  @apply opacity-5;
+}
+
+@media (width >= 48rem /* 768px */) {
+  .decor-tulip {
+    @apply bottom-0 left-0 h-32 w-32 opacity-100;
+    animation: none;
+  }
+}
+
+@keyframes animation-tulip {
+  0% {
+    rotate: 12deg;
+  }
+  100% {
+    rotate: 40deg;
+  }
+}
+
 .theme-tulip {
   --background: oklch(0.96 0.04 15);
   --foreground: oklch(0.25 0.08 350);
-  --card: oklch(0.98 0.03 15);
+  --card: oklch(96.941% 0.01515 12.013 / 0.295);
   --card-foreground: oklch(0.25 0.08 350);
   --popover: oklch(0.98 0.03 15);
   --popover-foreground: oklch(0.25 0.08 350);
@@ -22,7 +50,7 @@
 .theme-tulip.dark {
   --background: oklch(0.1 0.06 350);
   --foreground: oklch(0.92 0.04 15);
-  --card: oklch(0.16 0.07 350);
+  --card: oklch(16.281% 0.06757 351.601 / 0.336);
   --card-foreground: oklch(0.92 0.04 15);
   --popover: oklch(0.16 0.07 350);
   --popover-foreground: oklch(0.92 0.04 15);
