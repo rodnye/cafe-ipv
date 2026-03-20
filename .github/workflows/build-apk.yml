@@ -31,11 +31,6 @@ jobs:
       - name: Install dependencies
         run: pnpm i
 
-      - name: Build web app
-        run: pnpm build
-        env:
-          NODE_ENV: production
-
       - name: Assets to Capacitor
         run: pnpm android:sync
 
