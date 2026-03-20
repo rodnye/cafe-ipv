@@ -20,9 +20,9 @@
     <div class="w-full max-w-md">
       <div class="mb-6 text-center">
         <div
-          class="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+          class="bg-primary/10 mx-auto mb-4 flex h-32 w-32 items-center justify-center rounded-full p-6"
         >
-          <Coffee class="text-primary h-8 w-8" />
+          <img src="../assets/icon-logo.png" />
         </div>
         <h1 class="text-foreground text-2xl font-bold">Cafetería IPV</h1>
         <p class="text-muted-foreground mt-1 text-sm">
