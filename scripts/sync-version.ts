@@ -10,46 +10,59 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { log, error as elog } from 'node:console';
 import { exec } from './utils/exec';
 
-const FILES: { filePath: string; regex: RegExp }[] = [
-  { filePath: 'README.md', regex: /version[:\-]\s*([0-9]+\.[0-9]+\.[0-9]+)/ },
-  {
-    filePath: 'android/variables.gradle',
-    regex: /versionName\s*=\s*'([0-9]+\.[0-9]+\.[0-9]+)'/,
-  },
-  {
-    filePath: 'package.json',
-    regex: /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/,
-  },
-];
-
-//
-const updateVersionInFile = async (
-  filePath: string,
-  regex: RegExp,
-  newVersion: string
-) => {
-  try {
-    const content = await readFile(filePath, 'utf-8');
+const createVersionReplacement =
+  (regex: RegExp) => (content: string, newVersion: string) => {
     const match = content.match(regex);
 
     if (!match) {
-      log(`Version pattern not found in ${filePath}`);
-      return false;
+      throw new Error(`Version pattern not found`);
     }
 
-    const updatedContent = content.replace(
-      regex,
-      match[0].replace(match[1], newVersion)
-    );
+    return content.replace(regex, match[0].replace(match[1], newVersion));
+  };
 
-    await writeFile(filePath, updatedContent, 'utf-8');
-    log(`Updated ${filePath}: ${match[1]} -> ${newVersion}`);
-    return true;
-  } catch (error) {
-    elog(`Failed to update ${filePath}:`, error);
-    return false;
-  }
-};
+const FILES: {
+  filePath: string;
+  modifier: (content: string, newVersion: string) => string;
+}[] = [
+  {
+    filePath: 'README.md',
+    modifier: createVersionReplacement(
+      /version[:\-]\s*([0-9]+\.[0-9]+\.[0-9]+)/
+    ),
+  },
+  {
+    filePath: 'android/variables.gradle',
+    modifier: (content, newVersion) => {
+      content = createVersionReplacement(
+        /versionName\s*=\s*'([0-9]+\.[0-9]+\.[0-9]+)'/
+      )(content, newVersion);
+
+      // bump version code + 1
+      const regex = /versionCode\s*=\s*([0-9]+)/;
+      const match = content.match(regex);
+      if (!match || !match[1]) {
+        throw new Error(`Version code pattern not found`);
+      }
+      content = content.replace(
+        regex,
+        match[0].replace(
+          match[1],
+          // the version code + 1
+          (parseInt(match[1]) + 1).toString()
+        )
+      );
+
+      return content;
+    },
+  },
+  {
+    filePath: 'package.json',
+    modifier: createVersionReplacement(
+      /"version":\s*"([0-9]+\.[0-9]+\.[0-9]+)"/
+    ),
+  },
+];
 
 const syncVersion = async () => {
   const args = process.argv.slice(2);
@@ -69,8 +82,16 @@ const syncVersion = async () => {
 
   log(`Syncing version ${newVersion} across all files...\n`);
 
-  for (const { filePath, regex } of FILES)
-    await updateVersionInFile(filePath, regex, newVersion);
+  for (const { filePath, modifier } of FILES) {
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      await writeFile(filePath, modifier(content, newVersion), 'utf-8');
+
+      log(`Updated ${filePath} -> ${newVersion}`);
+    } catch (error) {
+      elog(`Failed to update ${filePath}:`, error);
+    }
+  }
 
   log('\nVersion sync completed!');
 
