@@ -4,11 +4,13 @@
   import { useProductStore } from '@/stores/product';
   import { useOrderStore } from '@/stores/order';
   import { useTableStore } from '@/stores/table';
+  import { useCardStore } from '@/stores/card';
   import CurrentOrder from '@/components/CurrentOrder.vue';
   import OrderList from '@/components/OrderList.vue';
+  import QRSelectorSheet from '@/components/QRSelectorSheet.vue';
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
-  import { Eye, Plus, Minus } from 'lucide-vue-next';
+  import { Eye, Plus, Minus, CreditCard } from 'lucide-vue-next';
   import {
     Sheet,
     SheetContent,
@@ -17,21 +19,55 @@
     SheetDescription,
   } from '@/components/ui/sheet';
   import type { ICartItem, IOrderId, IProductId } from '@/types';
+  import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+  } from '@/components/ui/dialog';
+  import CardManager from '@/components/CardManager.vue';
+  import type { ICard } from '@/types';
+  import QRDialog from '@/components/QRDialog.vue';
 
   const dayStore = useDayStore();
   const productStore = useProductStore();
   const orderStore = useOrderStore();
   const tableStore = useTableStore();
+  const cardStore = useCardStore();
 
   onMounted(() => {
     console.log('Init!!');
     dayStore.init();
+    cardStore.loadCards();
   });
 
   // Mobile sheet states
   const showOrdersSheet = ref(false);
   const showProductSheet = ref(false);
   const searchQuery = ref('');
+  const showCardManager = ref(false);
+  const showQRSelector = ref(false);
+  const showQRDialog = ref(false);
+  const selectedCardForQR = ref<ICard | null>(null);
+
+  // Check if there are cards
+  const hasCards = computed(() => cardStore.cards.length > 0);
+  const cardsCount = computed(() => cardStore.cards.length);
+
+  // Function to show QR
+  const showQRForCard = (card: ICard) => {
+    selectedCardForQR.value = card;
+    showQRDialog.value = true;
+  };
+
+  const handleQRButtonClick = () => {
+    if (cardsCount.value === 1) {
+      showQRForCard(cardStore.cards[0]!);
+    } else if (cardsCount.value > 1) {
+      showQRSelector.value = true;
+    }
+  };
 
   const filteredProducts = computed(() => {
     if (!searchQuery.value) return productStore.currentProducts;
@@ -225,6 +261,18 @@
               @delete="deleteOrder"
             />
           </div>
+
+          <!-- QR Button for Desktop -->
+          <div v-if="hasCards" class="border-t pt-4">
+            <Button
+              variant="outline"
+              class="w-full gap-2"
+              @click="handleQRButtonClick"
+            >
+              <CreditCard class="size-4" />
+              Mostrar QR de pago
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -269,8 +317,45 @@
           @save="saveOrder"
           @cancel="clearCurrentOrder"
         />
+        <div class="mt-4 border-t pt-4">
+          <Button
+            v-if="hasCards"
+            variant="outline"
+            class="mt-2 w-full gap-2"
+            @click="handleQRButtonClick"
+          >
+            <CreditCard class="size-4" />
+            Mostrar QR de pago
+          </Button>
+        </div>
       </div>
     </div>
+
+    <!-- QR Dialog -->
+    <QRDialog
+      v-if="selectedCardForQR"
+      v-model:open="showQRDialog"
+      :card="selectedCardForQR"
+    />
+
+    <!-- QR Selector Sheet -->
+    <QRSelectorSheet
+      v-model:open="showQRSelector"
+      :cards="cardStore.cards"
+      @select-card="showQRForCard"
+    />
+
+    <Dialog v-model:open="showCardManager">
+      <DialogContent class="max-h-[80vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Gestión de tarjetas Transfermóvil</DialogTitle>
+          <DialogDescription>
+            Administra las tarjetas para generar códigos QR de pago
+          </DialogDescription>
+        </DialogHeader>
+        <CardManager />
+      </DialogContent>
+    </Dialog>
 
     <!-- Mobile Product Sheet -->
     <Sheet v-model:open="showProductSheet">

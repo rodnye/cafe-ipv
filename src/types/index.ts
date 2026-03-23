@@ -51,3 +51,11 @@ export interface ICartItem {
   price: number;
   quantity: number;
 }
+
+export interface ICard {
+  id: string;
+  alias: string;
+  cardNumber: string;
+  phoneNumber: string;
+  createdAt: number;
+}

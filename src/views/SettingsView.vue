@@ -25,7 +25,14 @@
     SelectTrigger,
     SelectValue,
   } from '@/components/ui/select';
+  import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+  } from '@/components/ui/tabs';
   import ThemeSelector from '@/components/ThemeSelector.vue';
+  import CardManager from '@/components/CardManager.vue';
   import { Download, Upload, AlertTriangle, Trash2 } from 'lucide-vue-next';
   import {
     CURRENT_DAY_KEY,
@@ -213,73 +220,88 @@
       </h2>
       <ThemeSelector />
     </div>
-    <div class="grid gap-6 md:grid-cols-2">
-      <!-- Export Card -->
-      <Card>
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2">
-            <Download class="size-5" />
-            Exportar datos
-          </CardTitle>
-          <CardDescription>
-            Descarga una copia de seguridad de todos los datos de la aplicación
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button @click="handleExport" class="w-full gap-2">
-            <Download class="size-4" />
-            Exportar JSON
-          </Button>
-        </CardContent>
-      </Card>
 
-      <!-- Import Card -->
-      <Card>
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2">
-            <Upload class="size-5" />
-            Importar datos
-          </CardTitle>
-          <CardDescription>
-            Restaura una copia de seguridad. Esta acción reemplazará todos los
-            datos actuales
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            class="w-full gap-2"
-            @click="showImportDialog = true"
-          >
-            <Upload class="size-4" />
-            Importar JSON
-          </Button>
-        </CardContent>
-      </Card>
+    <Tabs default-value="data" class="w-full">
+      <TabsList class="grid w-full grid-cols-2">
+        <TabsTrigger value="data">Datos</TabsTrigger>
+        <TabsTrigger value="cards">Transfermóvil</TabsTrigger>
+      </TabsList>
 
-      <!-- Clear Data Card -->
-      <Card class="border-destructive/20 md:col-span-2">
-        <CardHeader>
-          <CardTitle class="text-destructive flex items-center gap-2">
-            <Trash2 class="size-5" />
-            Borrar datos
-          </CardTitle>
-          <CardDescription>
-            Elimina permanentemente todos los datos de la aplicación
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            class="w-full gap-2"
-            @click="showClearDialog = true"
-          >
-            <Trash2 class="size-4" />
-            Borrar datos
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+      <TabsContent value="data" class="mt-6">
+        <div class="grid gap-6 md:grid-cols-2">
+          <!-- Export Card -->
+          <Card>
+            <CardHeader>
+              <CardTitle class="flex items-center gap-2">
+                <Download class="size-5" />
+                Exportar datos
+              </CardTitle>
+              <CardDescription>
+                Descarga una copia de seguridad de todos los datos de la
+                aplicación
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button @click="handleExport" class="w-full gap-2">
+                <Download class="size-4" />
+                Exportar JSON
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Import Card -->
+          <Card>
+            <CardHeader>
+              <CardTitle class="flex items-center gap-2">
+                <Upload class="size-5" />
+                Importar datos
+              </CardTitle>
+              <CardDescription>
+                Restaura una copia de seguridad. Esta acción reemplazará todos
+                los datos actuales
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
+                class="w-full gap-2"
+                @click="showImportDialog = true"
+              >
+                <Upload class="size-4" />
+                Importar JSON
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Clear Data Card -->
+          <Card class="border-destructive/20 md:col-span-2">
+            <CardHeader>
+              <CardTitle class="text-destructive flex items-center gap-2">
+                <Trash2 class="size-5" />
+                Borrar datos
+              </CardTitle>
+              <CardDescription>
+                Elimina permanentemente todos los datos de la aplicación
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="destructive"
+                class="w-full gap-2"
+                @click="showClearDialog = true"
+              >
+                <Trash2 class="size-4" />
+                Borrar datos
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="cards" class="mt-6">
+        <CardManager />
+      </TabsContent>
+    </Tabs>
 
     <!-- Export Dialog -->
     <Dialog v-model:open="showExportDialog">

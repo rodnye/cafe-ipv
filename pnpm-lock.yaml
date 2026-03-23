@@ -32,6 +32,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.7.2
         version: 0.7.2(prettier@3.8.1)
+      qrcode.vue:
+        specifier: ^3.8.0
+        version: 3.8.0(vue@3.5.30(typescript@5.9.3))
       reka-ui:
         specifier: ^2.9.1
         version: 2.9.1(vue@3.5.30(typescript@5.9.3))
@@ -3772,6 +3775,11 @@ packages:
       You or someone you depend on is using Q, the JavaScript Promise library that gave JavaScript developers strong feelings about promises. They can almost certainly migrate to the native JavaScript promise now. Thank you literally everyone for joining me in this bet against the odds. Be excellent to each other.
 
       (For a CapTP with native promises, see @endo/eventual-send and @endo/captp)
+
+  qrcode.vue@3.8.0:
+    resolution: {integrity: sha512-+XKbSKvQu158zlHsJm+HObGUQM3Q+9Oq6yb2op/6lMM2gwOiiG9uIhujvrSV5UoTjrzR0BcNxCdW2kk7KE4NEg==}
+    peerDependencies:
+      vue: ^3.0.0
 
   qs@6.15.0:
     resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
@@ -8761,6 +8769,10 @@ snapshots:
   punycode@2.3.1: {}
 
   q@1.5.1: {}
+
+  qrcode.vue@3.8.0(vue@3.5.30(typescript@5.9.3)):
+    dependencies:
+      vue: 3.5.30(typescript@5.9.3)
 
   qs@6.15.0:
     dependencies:

@@ -29,6 +29,7 @@
     "lucide-vue-next": "^0.577.0",
     "pinia": "^3.0.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "qrcode.vue": "^3.8.0",
     "reka-ui": "^2.9.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
