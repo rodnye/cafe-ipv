@@ -359,14 +359,17 @@
 
     <!-- Mobile Product Sheet -->
     <Sheet v-model:open="showProductSheet">
-      <SheetContent side="bottom" class="h-[90vh] rounded-t-xl p-0">
+      <SheetContent
+        side="bottom"
+        class="flex h-[90vh] flex-col rounded-t-xl p-0"
+      >
         <SheetHeader class="border-b p-4">
           <SheetTitle>Agregar productos</SheetTitle>
           <SheetDescription>
             Selecciona los productos para tu pedido
           </SheetDescription>
         </SheetHeader>
-        <div class="flex h-full flex-col">
+        <div class="flex grow flex-col overflow-auto">
           <div class="border-b p-4">
             <Input
               v-model="searchQuery"
@@ -374,50 +377,48 @@
               class="w-full"
             />
           </div>
-          <div class="flex-1 overflow-y-auto p-4">
-            <div class="space-y-2">
-              <div
-                v-for="product in filteredProducts"
-                :key="product.id"
-                class="flex items-center justify-between rounded-lg border p-3"
-              >
-                <div>
-                  <p class="font-medium">{{ product.name }}</p>
-                  <p class="text-muted-foreground text-sm">
-                    {{ product.price }} CUP
-                  </p>
-                </div>
-                <div class="flex items-center gap-1">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    class="size-8"
-                    @click="removeFromCurrentOrder(product.id)"
-                  >
-                    <Minus class="size-4" />
-                  </Button>
-                  <span class="w-8 text-center">
-                    {{
-                      currentOrderItems.find((i) => i.productId === product.id)
-                        ?.quantity || 0
-                    }}
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    class="size-8"
-                    @click="addToCurrentOrder(product.id)"
-                  >
-                    <Plus class="size-4" />
-                  </Button>
-                </div>
+          <div class="flex flex-col space-y-2 overflow-y-auto p-4">
+            <div
+              v-for="product in filteredProducts"
+              :key="product.id"
+              class="flex items-center justify-between rounded-lg border p-3"
+            >
+              <div>
+                <p class="font-medium">{{ product.name }}</p>
+                <p class="text-muted-foreground text-sm">
+                  {{ product.price }} CUP
+                </p>
               </div>
-              <div
-                v-if="filteredProducts.length === 0"
-                class="text-muted-foreground py-8 text-center"
-              >
-                No hay productos para este día
+              <div class="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  class="size-8"
+                  @click="removeFromCurrentOrder(product.id)"
+                >
+                  <Minus class="size-4" />
+                </Button>
+                <span class="w-8 text-center">
+                  {{
+                    currentOrderItems.find((i) => i.productId === product.id)
+                      ?.quantity || 0
+                  }}
+                </span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  class="size-8"
+                  @click="addToCurrentOrder(product.id)"
+                >
+                  <Plus class="size-4" />
+                </Button>
               </div>
+            </div>
+            <div
+              v-if="filteredProducts.length === 0"
+              class="text-muted-foreground py-8 text-center"
+            >
+              No hay productos para este día
             </div>
           </div>
         </div>
@@ -433,7 +434,7 @@
             {{ orderStore.currentOrders.length }} pedidos registrados
           </SheetDescription>
         </SheetHeader>
-        <div class="h-full overflow-y-auto p-4">
+        <div class="overflow-y-auto p-4">
           <OrderList
             :orders="orderStore.currentOrders"
             @edit="editOrder"
