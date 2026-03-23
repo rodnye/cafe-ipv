@@ -5,14 +5,16 @@ import '../themes/default.css';
 import '../themes/aqua.css';
 import '../themes/coffee.css';
 import '../themes/nature.css';
-import '../themes/tulip.css';
+import '../themes/pink-tulip.css';
+import '../themes/purple-tulip.css';
 
 export type ThemeName =
   | 'theme-default'
   | 'theme-aqua'
   | 'theme-nature'
   | 'theme-coffee'
-  | 'theme-tulip';
+  | 'theme-pink-tulip'
+  | 'theme-purple-tulip';
 
 export const useThemeStore = defineStore('theme', () => {
   const currentTheme = ref<ThemeName>('theme-default');
@@ -28,7 +30,8 @@ export const useThemeStore = defineStore('theme', () => {
         'theme-aqua',
         'theme-nature',
         'theme-coffee',
-        'theme-tulip',
+        'theme-pink-tulip',
+        'theme-purple-tulip',
       ].includes(savedTheme)
     ) {
       currentTheme.value = savedTheme;

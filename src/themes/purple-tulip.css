@@ -1,0 +1,50 @@
+@reference '../style.css';
+
+@media (width >= 48rem /* 768px */) {
+  .decor-purple-tulip {
+    @apply bottom-0 left-0 h-32 w-32 opacity-100;
+    animation: none;
+  }
+}
+
+.theme-purple-tulip {
+  --background: oklch(0.97 0.04 320);
+  --foreground: oklch(0.25 0.08 330);
+  --card: oklch(97.502% 0.02203 325.51 / 0.288);
+  --card-foreground: oklch(0.25 0.08 330);
+  --popover: oklch(0.98 0.03 320);
+  --popover-foreground: oklch(0.25 0.08 330);
+  --primary: oklch(0.58 0.24 310);
+  --primary-foreground: oklch(0.98 0.02 320);
+  --secondary: oklch(0.88 0.09 330);
+  --secondary-foreground: oklch(0.28 0.1 330);
+  --muted: oklch(0.91 0.05 320);
+  --muted-foreground: oklch(0.48 0.08 330);
+  --accent: oklch(0.84 0.13 310);
+  --accent-foreground: oklch(0.25 0.08 330);
+  --destructive: oklch(0.64 0.24 30);
+  --border: oklch(0.83 0.06 320);
+  --input: oklch(0.89 0.05 320);
+  --ring: oklch(0.58 0.24 310);
+}
+
+.theme-purple-tulip.dark {
+  --background: oklch(0.12 0.06 330);
+  --foreground: oklch(0.93 0.04 320);
+  --card: oklch(17.097% 0.06907 330.886 / 0.267);
+  --card-foreground: oklch(0.93 0.04 320);
+  --popover: oklch(0.17 0.07 330);
+  --popover-foreground: oklch(0.93 0.04 320);
+  --primary: oklch(0.62 0.24 310);
+  --primary-foreground: oklch(0.98 0.02 320);
+  --secondary: oklch(0.24 0.09 330);
+  --secondary-foreground: oklch(0.93 0.04 320);
+  --muted: oklch(0.2 0.07 330);
+  --muted-foreground: oklch(0.62 0.06 330);
+  --accent: oklch(0.3 0.13 310);
+  --accent-foreground: oklch(0.93 0.04 320);
+  --destructive: oklch(0.6 0.24 30);
+  --border: oklch(0.25 0.08 330);
+  --input: oklch(0.23 0.08 330);
+  --ring: oklch(0.62 0.24 310);
+}

@@ -40,10 +40,16 @@
       description: 'Estilo café y elegante',
     },
     {
-      value: 'theme-tulip',
-      label: 'Tulipán',
+      value: 'theme-pink-tulip',
+      label: 'Tulipán rosa',
       color: 'bg-pink-500',
-      description: 'Inspirado en tulipanes rojos',
+      description: 'Un toque rosa a tus ventas',
+    },
+    {
+      value: 'theme-purple-tulip',
+      label: 'Tulipán morado',
+      color: 'bg-purple-500',
+      description: 'Para ARMYS y escritoras cutes',
     },
   ];
 
