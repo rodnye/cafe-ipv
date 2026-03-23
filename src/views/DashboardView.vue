@@ -369,7 +369,7 @@
         <div class="flex h-full flex-col">
           <div class="border-b p-4">
             <Input
-              :model-value="searchQuery"
+              v-model="searchQuery"
               placeholder="Buscar productos..."
               class="w-full"
             />
