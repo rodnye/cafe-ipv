@@ -10,7 +10,7 @@
   import QRSelectorSheet from '@/components/QRSelectorSheet.vue';
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
-  import { Eye, Plus, Minus, CreditCard } from 'lucide-vue-next';
+  import { Eye, Plus, Minus, CreditCard, List } from 'lucide-vue-next';
   import {
     Sheet,
     SheetContent,
@@ -29,12 +29,14 @@
   import CardManager from '@/components/CardManager.vue';
   import type { ICard } from '@/types';
   import QRDialog from '@/components/QRDialog.vue';
+  import { useBreakpoints } from '@/composable/useBreakpoints';
 
   const dayStore = useDayStore();
   const productStore = useProductStore();
   const orderStore = useOrderStore();
   const tableStore = useTableStore();
   const cardStore = useCardStore();
+  const { isMobile } = useBreakpoints();
 
   onMounted(() => {
     console.log('Init!!');
@@ -125,20 +127,6 @@
     editingOrderId.value = null;
   };
 
-  const currentOrderTotal = computed(() => {
-    return currentOrderItems.value.reduce((sum, item) => {
-      const price = item.price;
-      return sum + price * item.quantity;
-    }, 0);
-  });
-
-  const currentItemCount = computed(() => {
-    return currentOrderItems.value.reduce(
-      (sum, item) => sum + item.quantity,
-      0
-    );
-  });
-
   const editOrder = async (orderId: IOrderId) => {
     const order = await orderStore.getOrderById(dayStore.currentDayId, orderId);
     if (!order) return;
@@ -190,75 +178,82 @@
   <div v-if="dayStore.isLoading">Cargando</div>
   <div v-else class="flex h-full flex-col">
     <!-- Desktop Layout -->
-    <div class="hidden md:flex md:h-full">
+    <div v-if="!isMobile" class="flex h-full gap-4">
       <!-- Left column - Products -->
-      <div class="grow flex-col pr-2">
-        <div class="bg-background top-0 z-10 pt-4 pb-2">
+      <div class="flex grow flex-col pr-2">
+        <div class="bg-background pt-4 pb-2">
           <Input
-            :model-value="searchQuery"
+            v-model="searchQuery"
             placeholder="Buscar productos..."
             class="w-full"
           />
         </div>
-        <div class="grid grow grid-cols-2 gap-3 pb-4 lg:grid-cols-3">
+        <div class="h-full grow overflow-y-auto">
           <div
-            v-for="product in filteredProducts"
-            :key="product.id"
-            class="bg-card rounded-lg border p-3 transition-shadow hover:shadow-md"
+            class="grid grid-cols-2 gap-3 overflow-y-auto pb-4 lg:grid-cols-3 xl:grid-cols-4"
           >
-            <div class="mb-2">
-              <p class="font-medium">{{ product.name }}</p>
-              <p class="text-muted-foreground text-sm">
-                {{ product.price }} CUP
-              </p>
-            </div>
-            <Button
-              class="w-full gap-1"
-              size="sm"
-              variant="outline"
-              @click="addToCurrentOrder(product.id)"
+            <div
+              v-for="product in filteredProducts"
+              :key="product.id"
+              class="bg-card rounded-lg border p-3 transition-shadow hover:shadow-md"
             >
-              <Plus class="size-4" />
-              Agregar
-            </Button>
-          </div>
-          <div
-            v-if="filteredProducts.length === 0"
-            class="text-muted-foreground col-span-2 py-8 text-center"
-          >
-            No hay productos para este día
+              <div class="mb-2">
+                <p class="font-medium">{{ product.name }}</p>
+                <p class="text-muted-foreground text-sm">
+                  {{ product.price }} CUP
+                </p>
+              </div>
+              <Button
+                class="w-full gap-1"
+                size="sm"
+                variant="outline"
+                @click="addToCurrentOrder(product.id)"
+              >
+                <Plus class="size-4" />
+                Agregar
+              </Button>
+            </div>
+            <div
+              v-if="filteredProducts.length === 0"
+              class="text-muted-foreground col-span-2 py-8 text-center"
+            >
+              No hay productos para este día
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Right column - Order & Orders -->
-      <div class="flex flex-col space-y-4 border-l pl-2">
-        <CurrentOrder
-          :items="currentOrderItems"
-          :is-editing="!!editingOrderId"
-          @increment="addToCurrentOrder"
-          @decrement="removeFromCurrentOrder"
-          @remove="removeItemCompletely"
-          @save="saveOrder"
-          @cancel="clearCurrentOrder"
-        />
-
-        <div class="grow overflow-y-auto border-t pt-4">
-          <div class="mb-3 flex items-center justify-between">
-            <h3 class="font-medium">Pedidos del día</h3>
-            <span class="text-muted-foreground text-sm">
-              {{ orderStore.currentOrders.length }} pedidos
-            </span>
-          </div>
-          <OrderList
-            :orders="orderStore.currentOrders"
-            @edit="editOrder"
-            @delete="deleteOrder"
+      <!-- Right column -->
+      <div class="flex h-full w-80 shrink-0 flex-col">
+        <div class="flex grow flex-col overflow-y-auto *:grow">
+          <CurrentOrder
+            :items="currentOrderItems"
+            :is-editing="!!editingOrderId"
+            @increment="addToCurrentOrder"
+            @decrement="removeFromCurrentOrder"
+            @remove="removeItemCompletely"
+            @save="saveOrder"
+            @cancel="clearCurrentOrder"
           />
         </div>
 
+        <!-- Order history button -->
+        <div class="mt-4 border-t pt-4">
+          <Button
+            variant="outline"
+            class="w-full gap-2"
+            @click="showOrdersSheet = true"
+          >
+            <List class="size-4" />
+            Historial de pedidos
+            <span v-if="orderStore.currentOrders.length" class="ml-1 text-xs">
+              ({{ orderStore.currentOrders.length }})
+            </span>
+          </Button>
+        </div>
+
         <!-- QR Button for Desktop -->
-        <div v-if="hasCards" class="border-t pt-4">
+        <div v-if="hasCards" class="mt-2">
           <Button
             variant="outline"
             class="w-full gap-2"
@@ -272,36 +267,25 @@
     </div>
 
     <!-- Mobile Layout -->
-    <div class="flex h-full flex-col md:hidden">
+    <div v-else class="flex h-full flex-col">
       <!-- Current order summary -->
-      <div class="sticky top-0 z-10 border-b p-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="font-semibold">Pedido actual</h2>
-            <p class="text-muted-foreground text-sm">
-              {{ currentItemCount }} artículos · {{ currentOrderTotal }} CUP
-            </p>
-          </div>
-          <div class="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              class="gap-1"
-              @click="showOrdersSheet = true"
-            >
-              <Eye class="size-4" />
-              Historial
-            </Button>
-            <Button size="sm" class="gap-1" @click="showProductSheet = true">
-              <Plus class="size-4" />
-              Agregar
-            </Button>
-          </div>
-        </div>
+      <div class="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          class="gap-1"
+          @click="showOrdersSheet = true"
+        >
+          <Eye class="size-4" />
+          Historial
+        </Button>
+        <Button size="sm" class="gap-1" @click="showProductSheet = true">
+          <Plus class="size-4" />
+          Agregar
+        </Button>
       </div>
 
-      <!-- Current order details -->
-      <div class="flex-1 overflow-y-auto p-3">
+      <div class="flex grow flex-col overflow-y-auto">
         <CurrentOrder
           :items="currentOrderItems"
           :is-editing="!!editingOrderId"
@@ -311,17 +295,18 @@
           @save="saveOrder"
           @cancel="clearCurrentOrder"
         />
-        <div class="mt-4 border-t pt-4">
-          <Button
-            v-if="hasCards"
-            variant="outline"
-            class="mt-2 w-full gap-2"
-            @click="handleQRButtonClick"
-          >
-            <CreditCard class="size-4" />
-            Mostrar QR de pago
-          </Button>
-        </div>
+      </div>
+
+      <div class="mt-4 flex justify-end border-t pt-4">
+        <Button
+          v-if="hasCards"
+          variant="outline"
+          class="gap-2"
+          @click="handleQRButtonClick"
+        >
+          <CreditCard class="size-4" />
+          Mostrar QR de pago
+        </Button>
       </div>
     </div>
 
@@ -419,9 +404,12 @@
       </SheetContent>
     </Sheet>
 
-    <!-- Mobile Orders Sheet -->
+    <!-- Orders Sheet -->
     <Sheet v-model:open="showOrdersSheet">
-      <SheetContent side="bottom" class="h-[80vh] rounded-t-xl p-0">
+      <SheetContent
+        :side="isMobile ? 'bottom' : 'right'"
+        class="h-[80vh] rounded-t-xl p-0 md:h-full"
+      >
         <SheetHeader class="border-b p-4">
           <SheetTitle>Historial de pedidos del día</SheetTitle>
           <SheetDescription>
