@@ -27,7 +27,7 @@
 <template>
   <div class="space-y-2">
     <div
-      v-if="orders.length === 0"
+      v-if="!orders.length"
       class="text-muted-foreground py-4 text-center text-sm"
     >
       No hay pedidos

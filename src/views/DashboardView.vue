@@ -190,18 +190,17 @@
   <div v-if="dayStore.isLoading">Cargando</div>
   <div v-else class="flex h-full flex-col">
     <!-- Desktop Layout -->
-    <div class="hidden md:grid md:h-full md:grid-cols-3 md:gap-6">
+    <div class="hidden md:flex md:h-full">
       <!-- Left column - Products -->
-      <div class="col-span-2 overflow-y-auto pr-2">
-        <div class="bg-background sticky top-0 z-10 pt-4 pb-2">
-          <h2 class="mb-2 text-lg font-semibold">Productos</h2>
+      <div class="grow flex-col pr-2">
+        <div class="bg-background top-0 z-10 pt-4 pb-2">
           <Input
             :model-value="searchQuery"
             placeholder="Buscar productos..."
             class="w-full"
           />
         </div>
-        <div class="grid grid-cols-2 gap-3 pb-4">
+        <div class="grid grow grid-cols-2 gap-3 pb-4 lg:grid-cols-3">
           <div
             v-for="product in filteredProducts"
             :key="product.id"
@@ -233,46 +232,41 @@
       </div>
 
       <!-- Right column - Order & Orders -->
-      <div class="overflow-y-auto border-l pl-2">
-        <div class="bg-background sticky top-0 z-10 pt-4 pb-2">
-          <h2 class="mb-2 text-lg font-semibold">Pedido actual</h2>
-        </div>
-        <div class="space-y-4">
-          <CurrentOrder
-            :items="currentOrderItems"
-            :is-editing="!!editingOrderId"
-            @increment="addToCurrentOrder"
-            @decrement="removeFromCurrentOrder"
-            @remove="removeItemCompletely"
-            @save="saveOrder"
-            @cancel="clearCurrentOrder"
+      <div class="flex flex-col space-y-4 border-l pl-2">
+        <CurrentOrder
+          :items="currentOrderItems"
+          :is-editing="!!editingOrderId"
+          @increment="addToCurrentOrder"
+          @decrement="removeFromCurrentOrder"
+          @remove="removeItemCompletely"
+          @save="saveOrder"
+          @cancel="clearCurrentOrder"
+        />
+
+        <div class="grow overflow-y-auto border-t pt-4">
+          <div class="mb-3 flex items-center justify-between">
+            <h3 class="font-medium">Pedidos del día</h3>
+            <span class="text-muted-foreground text-sm">
+              {{ orderStore.currentOrders.length }} pedidos
+            </span>
+          </div>
+          <OrderList
+            :orders="orderStore.currentOrders"
+            @edit="editOrder"
+            @delete="deleteOrder"
           />
+        </div>
 
-          <div class="border-t pt-4">
-            <div class="mb-3 flex items-center justify-between">
-              <h3 class="font-medium">Pedidos del día</h3>
-              <span class="text-muted-foreground text-sm">
-                {{ orderStore.currentOrders.length }} pedidos
-              </span>
-            </div>
-            <OrderList
-              :orders="orderStore.currentOrders"
-              @edit="editOrder"
-              @delete="deleteOrder"
-            />
-          </div>
-
-          <!-- QR Button for Desktop -->
-          <div v-if="hasCards" class="border-t pt-4">
-            <Button
-              variant="outline"
-              class="w-full gap-2"
-              @click="handleQRButtonClick"
-            >
-              <CreditCard class="size-4" />
-              Mostrar QR de pago
-            </Button>
-          </div>
+        <!-- QR Button for Desktop -->
+        <div v-if="hasCards" class="border-t pt-4">
+          <Button
+            variant="outline"
+            class="w-full gap-2"
+            @click="handleQRButtonClick"
+          >
+            <CreditCard class="size-4" />
+            Mostrar QR de pago
+          </Button>
         </div>
       </div>
     </div>
