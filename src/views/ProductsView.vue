@@ -95,7 +95,7 @@
       </Button>
     </div>
 
-    <div class="overflow-x-auto rounded-lg border shadow-sm">
+    <div class="overflow-x-auto rounded-lg border shadow-sm select-none">
       <Table>
         <TableHeader>
           <TableRow class="bg-muted/50">
@@ -121,12 +121,10 @@
         >
           <template #item="{ element: product }">
             <TableRow class="hover:bg-muted/30 cursor-default">
-              <TableCell class="w-10">
-                <div
-                  class="drag-handle text-muted-foreground hover:text-foreground cursor-grab"
-                >
-                  <GripVertical class="size-4" />
-                </div>
+              <TableCell
+                class="drag-handle hover:text-foreground text-muted-foreground w-10 cursor-grab"
+              >
+                <GripVertical class="size-4" />
               </TableCell>
               <TableCell class="font-medium">{{ product.name }}</TableCell>
               <TableCell class="font-mono">{{ product.price }}</TableCell>
