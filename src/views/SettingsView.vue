@@ -42,6 +42,13 @@
     useDayStore,
   } from '@/stores/day';
   import { useAuthStore } from '@/stores/auth';
+  import { useFileHandler } from '@/composable/useFileHandler';
+
+  const { isAndroid, downloadWeb, saveToDevice, shareFile } = useFileHandler();
+  const showActionDialog = ref(false);
+  const pendingBlob = ref<Blob | null>(null);
+  const pendingFileName = ref('');
+  const actionInProgress = ref(false);
 
   const router = useRouter();
   const dayStore = useDayStore();
@@ -79,17 +86,18 @@
     showExportDialog.value = true;
   };
 
-  const downloadExport = () => {
+  const downloadExport = async () => {
     const blob = new Blob([exportData.value], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cafeteria-backup-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showExportDialog.value = false;
+    const fileName = `cafeteria-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+    if (isAndroid) {
+      pendingBlob.value = blob;
+      pendingFileName.value = fileName;
+      showActionDialog.value = true;
+    } else {
+      downloadWeb(blob, fileName);
+      showExportDialog.value = false;
+    }
   };
 
   const handleFileSelect = (event: Event) => {
@@ -148,6 +156,25 @@
     } finally {
       isImporting.value = false;
     }
+  };
+
+  const handleShare = async () => {
+    if (!pendingBlob.value) return;
+    actionInProgress.value = true;
+    const result = await shareFile(pendingBlob.value, pendingFileName.value);
+    actionInProgress.value = false;
+    showActionDialog.value = false;
+    if (!result.success) alert(result.message);
+    // Opcional: mostrar notificación con el resultado
+  };
+
+  const handleSave = async () => {
+    if (!pendingBlob.value) return;
+    actionInProgress.value = true;
+    const result = await saveToDevice(pendingBlob.value, pendingFileName.value);
+    actionInProgress.value = false;
+    showActionDialog.value = false;
+    if (!result.success) alert(result.message);
   };
 
   const handleClearData = async () => {
@@ -486,6 +513,32 @@
             }}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Diálogo de opciones para Android -->
+    <Dialog v-model:open="showActionDialog">
+      <DialogContent class="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Acción con el archivo</DialogTitle>
+          <DialogDescription>
+            Elige cómo quieres manejar el archivo generado.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="flex flex-col gap-2 py-4">
+          <Button @click="handleShare" :disabled="actionInProgress">
+            <Share class="mr-2 size-4" />
+            Compartir
+          </Button>
+          <Button
+            @click="handleSave"
+            :disabled="actionInProgress"
+            variant="outline"
+          >
+            <Download class="mr-2 size-4" />
+            Guardar en dispositivo
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   </div>

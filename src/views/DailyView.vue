@@ -38,9 +38,11 @@
   } from '@/components/ui/table';
   import type { IDayId } from '@/types';
   import * as xlsx from 'xlsx';
+  import { useFileHandler } from '@/composable/useFileHandler';
 
   const dayStore = useDayStore();
   const tableStore = useTableStore();
+  const { isAndroid, downloadWeb, saveToDevice, shareFile } = useFileHandler();
 
   const dailyTotal = computed(() => {
     if (!dayStore.currentDay) return 0;
@@ -48,6 +50,25 @@
       return sum + (product.daily.importe || 0);
     }, 0);
   });
+
+  const handleShare = async () => {
+    if (!pendingBlob.value) return;
+    actionInProgress.value = true;
+    const result = await shareFile(pendingBlob.value, pendingFileName.value);
+    actionInProgress.value = false;
+    showActionDialog.value = false;
+    if (!result.success) alert(result.message);
+    // Opcional: mostrar notificación con el resultado
+  };
+
+  const handleSave = async () => {
+    if (!pendingBlob.value) return;
+    actionInProgress.value = true;
+    const result = await saveToDevice(pendingBlob.value, pendingFileName.value);
+    actionInProgress.value = false;
+    showActionDialog.value = false;
+    if (!result.success) alert(result.message);
+  };
 
   // Dialog state for new day
   const showDateDialog = ref(false);
@@ -162,6 +183,11 @@
     await dayStore.deleteDay(dayId);
   };
 
+  const showActionDialog = ref(false);
+  const pendingBlob = ref<Blob | null>(null);
+  const pendingFileName = ref('');
+  const actionInProgress = ref(false);
+
   // Export to Excel $$$$
   const exportToExcel = () => {
     const book = xlsx.utils.book_new();
@@ -206,7 +232,19 @@
     xlsx.utils.book_append_sheet(book, sheet, 'Tabla Diaria');
 
     // Save file
-    xlsx.writeFile(book, `cafeteria-${dayStore.currentDay.date}.xlsx`);
+    const wbout = xlsx.write(book, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const fileName = `cafeteria-${dayStore.currentDay.date}.xlsx`;
+
+    if (isAndroid) {
+      pendingBlob.value = blob;
+      pendingFileName.value = fileName;
+      showActionDialog.value = true;
+    } else {
+      downloadWeb(blob, fileName);
+    }
   };
 </script>
 
@@ -339,6 +377,32 @@
             Cerrar
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Diálogo de opciones para Android -->
+    <Dialog v-model:open="showActionDialog">
+      <DialogContent class="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Acción con el archivo</DialogTitle>
+          <DialogDescription>
+            Elige cómo quieres manejar el archivo generado.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="flex flex-col gap-2 py-4">
+          <Button @click="handleShare" :disabled="actionInProgress">
+            <Share class="mr-2 size-4" />
+            Compartir
+          </Button>
+          <Button
+            @click="handleSave"
+            :disabled="actionInProgress"
+            variant="outline"
+          >
+            <Download class="mr-2 size-4" />
+            Guardar en dispositivo
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
 
